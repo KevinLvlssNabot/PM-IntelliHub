@@ -135,8 +135,9 @@ export function Layout({ children, selectedApp, onSelectApp, activeTab, onSelect
         flexShrink: 0,
       }}>
         {[
-          { id: 'digest', label: 'Daily Digest' },
-          { id: 'chat',   label: 'Ask AI' },
+          { id: 'digest',   label: 'Daily Digest' },
+          { id: 'trending', label: 'Trending Games' },
+          { id: 'chat',     label: 'Ask AI' },
         ].map(tab => {
           const isActive = activeTab === tab.id;
           return (
