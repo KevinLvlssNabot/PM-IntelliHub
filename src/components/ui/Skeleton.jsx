@@ -1,46 +1,41 @@
 import React from 'react';
 
-export function Skeleton({ width = '100%', height = 16, style = {}, borderRadius = 4 }) {
+const shimmerStyle = {
+  background: 'linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-hover) 50%, var(--bg-elevated) 75%)',
+  backgroundSize: '200% 100%',
+  animation: 'shimmer 1.4s ease infinite',
+  borderRadius: 'var(--r-sm)',
+};
+
+export function Skeleton({ width, height = 12, style }) {
   return (
     <div
       style={{
-        width,
-        height,
-        borderRadius,
-        background: 'var(--color-bg-tertiary)',
-        animation: 'pulse 1.5s ease-in-out infinite',
+        ...shimmerStyle,
+        width: width ? `${width}px` : '100%',
+        height: height,
         ...style,
       }}
     />
   );
 }
 
-export function SkeletonText({ lines = 3, style = {} }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, ...style }}>
-      {Array.from({ length: lines }).map((_, i) => (
-        <Skeleton key={i} width={i === lines - 1 ? '60%' : '100%'} height={14} />
-      ))}
-    </div>
-  );
-}
-
-export function SkeletonCard({ style = {} }) {
+export function SkeletonCard() {
   return (
     <div
       style={{
-        background: 'var(--color-bg-secondary)',
-        border: '1px solid var(--color-border)',
-        borderRadius: 'var(--radius-card)',
-        padding: 16,
-        ...style,
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--r-lg)',
+        padding: '20px 22px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-        <Skeleton width={120} height={16} />
-        <Skeleton width={50} height={20} borderRadius={4} />
-      </div>
-      <SkeletonText lines={3} />
+      <Skeleton width={120} height={11} />
+      <Skeleton width={220} height={15} />
+      <Skeleton width={180} height={11} />
     </div>
   );
 }

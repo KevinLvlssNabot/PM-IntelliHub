@@ -1,37 +1,34 @@
 import React from 'react';
 
-const colorMap = {
-  ok:       { bg: 'rgba(34,197,94,0.15)',  color: 'var(--color-success)' },
-  success:  { bg: 'rgba(34,197,94,0.15)',  color: 'var(--color-success)' },
-  warning:  { bg: 'rgba(245,158,11,0.15)', color: 'var(--color-warning)' },
-  critical: { bg: 'rgba(239,68,68,0.15)',  color: 'var(--color-danger)'  },
-  danger:   { bg: 'rgba(239,68,68,0.15)',  color: 'var(--color-danger)'  },
-  error:    { bg: 'rgba(239,68,68,0.15)',  color: 'var(--color-danger)'  },
-  info:     { bg: 'rgba(59,130,246,0.15)', color: 'var(--color-info)'    },
-  accent:   { bg: 'rgba(99,102,241,0.15)', color: 'var(--color-accent)'  },
-  neutral:  { bg: 'var(--color-bg-tertiary)', color: 'var(--color-text-secondary)' },
-  high:     { bg: 'rgba(239,68,68,0.15)',  color: 'var(--color-danger)'  },
-  medium:   { bg: 'rgba(245,158,11,0.15)', color: 'var(--color-warning)' },
-  low:      { bg: 'rgba(34,197,94,0.15)',  color: 'var(--color-success)' },
-  urgent:   { bg: 'rgba(239,68,68,0.2)',   color: '#ff6b6b' },
+const VARIANTS = {
+  ok:      { bg: 'var(--ok-dim)',   color: 'var(--ok)',   dot: 'var(--ok)' },
+  warning: { bg: 'var(--warn-dim)', color: 'var(--warn)', dot: 'var(--warn)' },
+  critical:{ bg: 'var(--crit-dim)', color: 'var(--crit)', dot: 'var(--crit)' },
+  high:    { bg: 'var(--crit-dim)', color: 'var(--crit)', dot: 'var(--crit)' },
+  urgent:  { bg: 'var(--crit-dim)', color: 'var(--crit)', dot: 'var(--crit)' },
+  medium:  { bg: 'var(--info-dim)', color: 'var(--info)', dot: 'var(--info)' },
+  low:     { bg: 'rgba(122,132,148,0.12)', color: 'var(--text-2)', dot: 'var(--text-2)' },
+  neutral: { bg: 'rgba(122,132,148,0.12)', color: 'var(--text-2)', dot: 'var(--text-2)' },
+  live:    { bg: 'var(--accent-dim)', color: 'var(--accent)', dot: 'var(--accent)' },
 };
 
-export function Badge({ children, variant = 'neutral', style = {}, dot = false }) {
-  const c = colorMap[variant] || colorMap.neutral;
+export function Badge({ children, variant = 'neutral', dot = false, style }) {
+  const v = VARIANTS[variant] ?? VARIANTS.neutral;
   return (
     <span
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: dot ? 5 : 0,
-        padding: '2px 8px',
-        borderRadius: 'var(--radius-badge)',
-        fontSize: '11px',
+        gap: 5,
+        fontFamily: 'var(--font-ui)',
+        fontSize: 10,
         fontWeight: 600,
-        letterSpacing: '0.02em',
+        letterSpacing: '0.06em',
         textTransform: 'uppercase',
-        background: c.bg,
-        color: c.color,
+        padding: '3px 7px',
+        borderRadius: 'var(--r-sm)',
+        background: v.bg,
+        color: v.color,
         whiteSpace: 'nowrap',
         ...style,
       }}
@@ -39,11 +36,12 @@ export function Badge({ children, variant = 'neutral', style = {}, dot = false }
       {dot && (
         <span
           style={{
-            width: 6,
-            height: 6,
+            width: 5,
+            height: 5,
             borderRadius: '50%',
-            background: c.color,
+            background: v.dot,
             flexShrink: 0,
+            animation: variant === 'live' ? 'livePulse 2s ease infinite' : undefined,
           }}
         />
       )}

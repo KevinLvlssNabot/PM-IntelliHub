@@ -34,62 +34,106 @@ Respond ONLY with raw JSON (no markdown fences) matching this exact schema:
 }`;
 }
 
-function TrendArrow({ trend }) {
-  if (trend === 'up') return <span style={{ color: 'var(--color-success)' }}>↑</span>;
-  if (trend === 'down') return <span style={{ color: 'var(--color-danger)' }}>↓</span>;
-  return <span style={{ color: 'var(--color-text-tertiary)' }}>→</span>;
+function useCountUp(target, duration = 700) {
+  const [value, setValue] = React.useState(0);
+  React.useEffect(() => {
+    if (target == null || isNaN(Number(target))) { setValue(target); return; }
+    const start = performance.now();
+    const num = parseFloat(target);
+    const raf = requestAnimationFrame(function tick(now) {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setValue(num * eased);
+      if (p < 1) requestAnimationFrame(tick);
+      else setValue(num);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return value;
 }
 
-function HighlightChip({ item }) {
-  const statusColor = {
-    ok: 'var(--color-success)',
-    warning: 'var(--color-warning)',
-    critical: 'var(--color-danger)',
-  }[item.status] || 'var(--color-text-secondary)';
+function SectionLabel({ children }) {
+  return (
+    <div style={{
+      fontFamily: 'var(--font-mono)',
+      fontSize: 9,
+      fontWeight: 600,
+      letterSpacing: '0.14em',
+      textTransform: 'uppercase',
+      color: 'var(--text-3)',
+      marginBottom: 14,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+    }}>
+      <span style={{ flex: '0 0 auto' }}>{children}</span>
+      <span style={{ height: '1px', background: 'var(--border)', flex: 1 }} />
+    </div>
+  );
+}
+
+function HighlightChip({ item, index }) {
+  const raw = String(item.value ?? '');
+  const numMatch = raw.match(/^([€$]?)(-?\d+\.?\d*)([%kKmM]?)$/);
+  const numericTarget = numMatch ? parseFloat(numMatch[2]) : null;
+  const prefix = numMatch ? numMatch[1] : '';
+  const suffix = numMatch ? numMatch[3] : '';
+
+  const animated = useCountUp(numericTarget, 700 + index * 80);
+
+  const statusColor = { ok: 'var(--ok)', warning: 'var(--warn)', critical: 'var(--crit)' }[item.status] ?? 'var(--text-1)';
+  const trendArrow = item.trend === 'up' ? '↑' : item.trend === 'down' ? '↓' : '→';
+  const trendColor = item.trend === 'up' ? 'var(--ok)' : item.trend === 'down' ? 'var(--crit)' : 'var(--text-3)';
+
+  const displayValue = numericTarget != null
+    ? `${prefix}${suffix.toLowerCase() === '%' ? animated.toFixed(2) : Math.round(animated).toLocaleString('en')}${suffix}`
+    : raw;
 
   return (
     <div
+      className="animate-slide-up"
       style={{
-        background: 'var(--color-bg-tertiary)',
-        border: '1px solid var(--color-border)',
-        borderRadius: 'var(--radius-card)',
-        padding: '12px 16px',
+        animationDelay: `${index * 50}ms`,
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--r-lg)',
+        padding: '16px 18px',
+        flex: '1 1 150px',
         minWidth: 140,
-        flex: '1 1 140px',
       }}
     >
-      <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', marginBottom: 6, fontWeight: 500 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 10 }}>
         {item.label}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <span style={{ fontSize: 20, fontWeight: 700, color: statusColor }}>
-          {item.value}
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 26, fontWeight: 600, color: statusColor, letterSpacing: '-0.02em', lineHeight: 1 }}>
+          {displayValue}
         </span>
-        <TrendArrow trend={item.trend} />
+        <span style={{ fontSize: 14, color: trendColor }}>{trendArrow}</span>
       </div>
     </div>
   );
 }
 
-function AnomalyItem({ item }) {
+function AnomalyItem({ item, index }) {
+  const borderColor = { high: 'var(--crit)', medium: 'var(--warn)', low: 'var(--ok)' }[item.severity] ?? 'var(--border)';
   return (
     <div
+      className="animate-slide-left"
       style={{
-        display: 'flex',
-        gap: 12,
-        padding: '12px 0',
-        borderBottom: '1px solid var(--color-border)',
+        animationDelay: `${index * 60}ms`,
+        borderLeft: `3px solid ${borderColor}`,
+        paddingLeft: 16,
+        paddingTop: 12,
+        paddingBottom: 12,
+        borderBottom: '1px solid var(--border)',
       }}
     >
-      <div style={{ paddingTop: 2 }}>
-        <Badge variant={item.severity} dot>
-          {item.severity}
-        </Badge>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 5 }}>
+        <span style={{ fontFamily: 'var(--font-ui)', fontWeight: 600, fontSize: 13, color: 'var(--text-1)' }}>{item.title}</span>
+        <Badge variant={item.severity}>{item.severity}</Badge>
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{item.title}</div>
-        <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>{item.detail}</div>
-      </div>
+      <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.55 }}>{item.detail}</div>
     </div>
   );
 }
@@ -106,17 +150,17 @@ function TicketRow({ ticket }) {
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: '80px 1fr 120px 80px 80px',
+        gridTemplateColumns: '90px 1fr 130px 90px 80px',
         gap: 12,
         padding: '10px 12px',
-        borderRadius: 'var(--radius-badge)',
-        background: 'var(--color-bg-tertiary)',
+        borderRadius: 'var(--r-md)',
+        background: 'var(--bg-elevated)',
         marginBottom: 6,
         alignItems: 'center',
         fontSize: 13,
       }}
     >
-      <code style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--color-accent)' }}>
+      <code style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent-text)' }}>
         {ticket.id}
       </code>
       <span
@@ -124,16 +168,16 @@ function TicketRow({ ticket }) {
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
-          color: 'var(--color-text-primary)',
+          color: 'var(--text-1)',
         }}
         title={ticket.title}
       >
         {ticket.title}
       </span>
-      <span style={{ color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <span style={{ color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {ticket.assignee || '—'}
       </span>
-      <span style={{ color: 'var(--color-warning)', fontWeight: 600 }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--warn)', fontWeight: 500 }}>
         {ticket.days_idle}d idle
       </span>
       <Badge variant={priorityBadge}>{ticket.priority}</Badge>
@@ -178,9 +222,20 @@ export function DigestView({ settings, selectedApp, onOpenSettings }) {
   if (!settings?.anthropicKey) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300, gap: 16 }}>
-        <div style={{ fontSize: 40 }}>🔑</div>
-        <h3 style={{ fontSize: 16, fontWeight: 600 }}>API key required</h3>
-        <p style={{ color: 'var(--color-text-secondary)', fontSize: 14, textAlign: 'center', maxWidth: 340 }}>
+        <div style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 11,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: 'var(--text-3)',
+          marginBottom: 4,
+        }}>
+          — API key required —
+        </div>
+        <h3 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 24, fontWeight: 300, color: 'var(--text-1)' }}>
+          Connect to get started
+        </h3>
+        <p style={{ color: 'var(--text-2)', fontSize: 14, textAlign: 'center', maxWidth: 340 }}>
           Add your Anthropic API key to start generating daily digests.
         </p>
         <Button onClick={onOpenSettings}>Open Settings</Button>
@@ -189,33 +244,44 @@ export function DigestView({ settings, selectedApp, onOpenSettings }) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 2 }}>Daily Digest</h2>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 6 }}>
+            Intelligence Brief
+          </div>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 300, fontSize: 28, color: 'var(--text-1)', lineHeight: 1.1, marginBottom: 4 }}>
+            Daily Digest
+          </h2>
           {refreshedAt && (
-            <p style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-              Refreshed at {refreshedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-3)' }}>
+              refreshed {refreshedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </p>
           )}
         </div>
         <Button variant="secondary" onClick={fetchDigest} loading={loading} size="sm">
-          {loading ? 'Refreshing…' : '↻ Refresh'}
+          {loading ? (
+            <>Refreshing…</>
+          ) : (
+            <><span style={{ display: 'inline-block' }}>↻</span> Refresh</>
+          )}
         </Button>
       </div>
 
       {/* Error state */}
       {error && (
-        <Card style={{ background: 'rgba(239,68,68,0.08)', borderColor: 'rgba(239,68,68,0.3)' }}>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-            <span style={{ fontSize: 18 }}>⚠️</span>
-            <div>
-              <div style={{ fontWeight: 600, marginBottom: 4, color: 'var(--color-danger)' }}>Error fetching digest</div>
-              <div style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>{error}</div>
-            </div>
+        <div style={{
+          background: 'var(--crit-dim)',
+          border: '1px solid var(--crit)',
+          borderRadius: 'var(--r-lg)',
+          padding: '16px 20px',
+        }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--crit)', marginBottom: 6 }}>
+            Error fetching digest
           </div>
-        </Card>
+          <div style={{ fontSize: 13, color: 'var(--text-2)' }}>{error}</div>
+        </div>
       )}
 
       {/* Loading skeletons */}
@@ -227,14 +293,14 @@ export function DigestView({ settings, selectedApp, onOpenSettings }) {
               <div
                 key={i}
                 style={{
-                  background: 'var(--color-bg-tertiary)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 8,
-                  padding: '12px 16px',
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--r-lg)',
+                  padding: '16px 18px',
                   flex: '1 1 140px',
                 }}
               >
-                <Skeleton width={80} height={12} style={{ marginBottom: 10 }} />
+                <Skeleton width={80} height={11} style={{ marginBottom: 10 }} />
                 <Skeleton width={60} height={22} />
               </div>
             ))}
@@ -248,10 +314,8 @@ export function DigestView({ settings, selectedApp, onOpenSettings }) {
         <>
           {/* Summary */}
           <Card>
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-tertiary)', marginBottom: 10 }}>
-              Executive Summary
-            </div>
-            <p style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--color-text-primary)' }}>
+            <SectionLabel>Executive Summary</SectionLabel>
+            <p style={{ fontFamily: 'var(--font-display)', fontSize: 18, lineHeight: 1.65, color: 'var(--text-1)', fontStyle: 'italic' }}>
               {digest.summary}
             </p>
           </Card>
@@ -259,12 +323,10 @@ export function DigestView({ settings, selectedApp, onOpenSettings }) {
           {/* Highlights */}
           {digest.highlights?.length > 0 && (
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-tertiary)', marginBottom: 12 }}>
-                Key Metrics
-              </div>
+              <SectionLabel>Key Metrics</SectionLabel>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 {digest.highlights.map((h, i) => (
-                  <HighlightChip key={i} item={h} />
+                  <HighlightChip key={i} item={h} index={i} />
                 ))}
               </div>
             </div>
@@ -273,12 +335,10 @@ export function DigestView({ settings, selectedApp, onOpenSettings }) {
           {/* Anomalies */}
           {digest.anomalies?.length > 0 && (
             <Card>
-              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-tertiary)', marginBottom: 4 }}>
-                Anomalies & Alerts
-              </div>
+              <SectionLabel>Anomalies &amp; Alerts</SectionLabel>
               <div>
                 {digest.anomalies.map((a, i) => (
-                  <AnomalyItem key={i} item={a} />
+                  <AnomalyItem key={i} item={a} index={i} />
                 ))}
               </div>
             </Card>
@@ -287,22 +347,21 @@ export function DigestView({ settings, selectedApp, onOpenSettings }) {
           {/* Stale tickets */}
           {digest.stale_tickets?.length > 0 && (
             <Card>
-              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-text-tertiary)', marginBottom: 12 }}>
-                Stale Tickets ({digest.stale_tickets.length})
-              </div>
+              <SectionLabel>Stale Tickets ({digest.stale_tickets.length})</SectionLabel>
               {/* Table header */}
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '80px 1fr 120px 80px 80px',
+                  gridTemplateColumns: '90px 1fr 130px 90px 80px',
                   gap: 12,
                   padding: '6px 12px',
-                  fontSize: 11,
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 9,
                   fontWeight: 600,
-                  letterSpacing: '0.05em',
+                  letterSpacing: '0.1em',
                   textTransform: 'uppercase',
-                  color: 'var(--color-text-tertiary)',
-                  marginBottom: 4,
+                  color: 'var(--text-3)',
+                  marginBottom: 6,
                 }}
               >
                 <span>ID</span>
@@ -319,11 +378,15 @@ export function DigestView({ settings, selectedApp, onOpenSettings }) {
 
           {/* Empty state */}
           {!digest.anomalies?.length && !digest.stale_tickets?.length && !digest.highlights?.length && (
-            <Card style={{ textAlign: 'center', padding: 32 }}>
-              <div style={{ fontSize: 32, marginBottom: 12 }}>✅</div>
-              <div style={{ fontWeight: 600, marginBottom: 6 }}>All clear</div>
-              <div style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
+            <Card style={{ textAlign: 'center', padding: 40 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ok)', marginBottom: 10 }}>
+                All Clear
+              </div>
+              <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 20, color: 'var(--text-1)', marginBottom: 8 }}>
                 No anomalies or stale tickets found.
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text-2)' }}>
+                Your product is operating normally.
               </div>
             </Card>
           )}

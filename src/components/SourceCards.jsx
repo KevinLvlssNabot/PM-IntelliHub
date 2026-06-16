@@ -5,18 +5,16 @@ import { Badge } from './ui/Badge.jsx';
 import { Button } from './ui/Button.jsx';
 
 function LinearCardContent({ settings }) {
-  // Placeholder — real data comes from the digest or a dedicated call
   return (
     <div style={{ marginTop: 8 }}>
-      <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', marginBottom: 6 }}>Live connection</div>
-      <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 6 }}>Live connection</div>
+      <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>
         Stale ticket data will appear in your Daily Digest. Open the Digest tab to see the full breakdown.
       </div>
     </div>
   );
 }
 
-// Sources that are per-app (show app context badge)
 const APP_SCOPED_SOURCES = new Set(['sentry', 'amplitude', 'appsflyer', 'appstore', 'googleplay']);
 
 function SourceCard({ source, settings, appLabel, onOpenSettings }) {
@@ -28,7 +26,7 @@ function SourceCard({ source, settings, appLabel, onOpenSettings }) {
     <div style={{ position: 'relative' }}>
       <Card
         style={{
-          opacity: isComingSoon ? 0.6 : 1,
+          opacity: isComingSoon ? 0.5 : 1,
           display: 'flex',
           flexDirection: 'column',
           gap: 10,
@@ -36,22 +34,21 @@ function SourceCard({ source, settings, appLabel, onOpenSettings }) {
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 20 }}>{source.icon}</span>
-            <div>
-              <span style={{ fontWeight: 600, fontSize: 14 }}>{source.label}</span>
-              {isAppScoped && (
-                <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
-                  for {appLabel}
-                </div>
-              )}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+          <div>
+            <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 600, fontSize: 14, color: 'var(--text-1)' }}>
+              {source.label}
             </div>
+            {isAppScoped && (
+              <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 13, color: 'var(--text-3)', marginTop: 2 }}>
+                for {appLabel}
+              </div>
+            )}
           </div>
           {isComingSoon ? (
             <Badge variant="neutral">Coming soon</Badge>
           ) : hasToken ? (
-            <Badge variant="ok" dot>Live</Badge>
+            <Badge variant="live" dot>Live</Badge>
           ) : (
             <Badge variant="neutral">Not connected</Badge>
           )}
@@ -59,7 +56,9 @@ function SourceCard({ source, settings, appLabel, onOpenSettings }) {
 
         {/* Description */}
         {source.description && (
-          <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>{source.description}</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.05em', color: 'var(--text-3)', lineHeight: 1.5 }}>
+            {source.description}
+          </div>
         )}
 
         {/* Body */}
@@ -68,7 +67,7 @@ function SourceCard({ source, settings, appLabel, onOpenSettings }) {
         )}
 
         {!isComingSoon && hasToken && source.id !== 'linear' && (
-          <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
+          <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>
             Connected — data appears in your Daily Digest.
           </div>
         )}
@@ -95,22 +94,25 @@ function SourceCard({ source, settings, appLabel, onOpenSettings }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            borderRadius: 'var(--radius-card)',
-            background: 'rgba(0,0,0,0.3)',
+            borderRadius: 'var(--r-lg)',
+            background: 'rgba(8,10,14,0.6)',
+            backgroundImage: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0, rgba(255,255,255,0.03) 1px, transparent 0, transparent 50%)',
+            backgroundSize: '8px 8px',
             pointerEvents: 'none',
           }}
         >
           <span
             style={{
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: '0.08em',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              fontWeight: 600,
+              letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              color: 'var(--color-text-tertiary)',
-              background: 'var(--color-bg-secondary)',
-              border: '1px solid var(--color-border)',
+              color: 'var(--text-3)',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
               padding: '4px 10px',
-              borderRadius: 'var(--radius-badge)',
+              borderRadius: 'var(--r-sm)',
             }}
           >
             Coming Soon
@@ -128,11 +130,16 @@ export function SourceCards({ settings, selectedApp, onOpenSettings }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 8 }}>
         <div>
-          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>Data Sources</h3>
-          <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)' }}>
-            {connectedCount} of {sourceList.filter(s => !s.comingSoon).length} sources connected
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 6 }}>
+            Data Sources
+          </div>
+          <h3 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 300, fontSize: 22, color: 'var(--text-1)', marginBottom: 4 }}>
+            Integrations
+          </h3>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-3)' }}>
+            {connectedCount} / {sourceList.filter(s => !s.comingSoon).length} connected
           </p>
         </div>
         <Button variant="ghost" size="sm" onClick={onOpenSettings}>
