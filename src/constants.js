@@ -1,7 +1,12 @@
 export const APPS = [
-  { id: "thrillz-android", label: "Thrillz Android", platform: "android" },
-  { id: "thrillz-ios",     label: "Thrillz iOS",     platform: "ios" },
-  { id: "play-smart",      label: "Play Smart",       platform: "both" },
+  { id: "thrillz-android", label: "Thrillz Android", platform: "android", group: "Thrillz" },
+  { id: "thrillz-ios",     label: "Thrillz iOS",     platform: "ios",     group: "Thrillz" },
+  { id: "play-smart",      label: "Play Smart",       platform: "both",    group: "Play Smart" },
+  { id: "checkmate-chess", label: "Checkmate Chess",  platform: "both",    group: "Play Smart" },
+  { id: "fish-escape",     label: "Fish Escape",      platform: "both",    group: "Play Smart" },
+  { id: "knife-king",      label: "Knife King",       platform: "both",    group: "Play Smart" },
+  { id: "mahjong-mania",   label: "Mahjong Mania",    platform: "both",    group: "Play Smart" },
+  { id: "riddle-rails",    label: "Riddle Rails",     platform: "both",    group: "Play Smart" },
 ];
 
 export const SOURCES = {

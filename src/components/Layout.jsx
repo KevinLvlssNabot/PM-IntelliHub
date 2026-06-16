@@ -73,41 +73,58 @@ export function Layout({ children, selectedApp, onSelectApp, activeTab, onSelect
         padding: '0 28px',
         height: 40,
         borderBottom: '1px solid var(--border)',
-        gap: 2,
+        gap: 0,
         flexShrink: 0,
+        overflowX: 'auto',
       }}>
-        <span style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 9,
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          color: 'var(--text-3)',
-          marginRight: 14,
-        }}>App</span>
-        {APPS.map(app => {
-          const isActive = selectedApp === app.id;
-          return (
-            <button
-              key={app.id}
-              onClick={() => onSelectApp(app.id)}
-              style={{
-                fontFamily: 'var(--font-ui)',
-                fontSize: 12,
-                fontWeight: isActive ? 600 : 400,
-                padding: '4px 12px',
-                border: '1px solid',
-                borderColor: isActive ? 'rgba(200,255,87,0.35)' : 'transparent',
-                borderRadius: 'var(--r-sm)',
-                background: isActive ? 'var(--accent-dim)' : 'transparent',
-                color: isActive ? 'var(--accent)' : 'var(--text-2)',
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}
-            >
-              {app.label}
-            </button>
-          );
-        })}
+        {Object.entries(
+          APPS.reduce((acc, app) => {
+            (acc[app.group] = acc[app.group] || []).push(app);
+            return acc;
+          }, {})
+        ).map(([group, apps], gi) => (
+          <div key={group} style={{ display: 'flex', alignItems: 'center', gap: 2, marginRight: 6 }}>
+            {gi > 0 && (
+              <span style={{ width: 1, height: 16, background: 'var(--border)', marginRight: 6, flexShrink: 0 }} />
+            )}
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 9,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: 'var(--text-3)',
+              marginRight: 6,
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+            }}>{group}</span>
+            {apps.map(app => {
+              const isActive = selectedApp === app.id;
+              return (
+                <button
+                  key={app.id}
+                  onClick={() => onSelectApp(app.id)}
+                  style={{
+                    fontFamily: 'var(--font-ui)',
+                    fontSize: 12,
+                    fontWeight: isActive ? 600 : 400,
+                    padding: '4px 10px',
+                    border: '1px solid',
+                    borderColor: isActive ? 'rgba(200,255,87,0.35)' : 'transparent',
+                    borderRadius: 'var(--r-sm)',
+                    background: isActive ? 'var(--accent-dim)' : 'transparent',
+                    color: isActive ? 'var(--accent)' : 'var(--text-2)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  {app.label}
+                </button>
+              );
+            })}
+          </div>
+        ))}
       </div>
 
       {/* Tab nav */}
