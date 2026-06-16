@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useClaude } from '../hooks/useClaude.js';
-import { fetchAppStoreTrending, fetchGooglePlayTrending } from '../utils/trendingGames.js';
+import { fetchAppStoreTrending, fetchGooglePlayTrending, assessAppStoreComplexity } from '../utils/trendingGames.js';
 import { Card } from './ui/Card.jsx';
 import { Badge } from './ui/Badge.jsx';
 import { Button } from './ui/Button.jsx';
@@ -55,9 +55,18 @@ function isRecent(dateStr, days = 14) {
   return !isNaN(ms) && ms >= Date.now() - days * 86_400_000;
 }
 
+const COMPLEXITY_COLOR = {
+  vibe: 'var(--ok)',
+  dev:  'var(--warn)',
+};
+
 function GameRow({ game, index }) {
-  const fresh    = isRecent(game.releaseDate, 14);
-  const topThree = game.rank <= 3;
+  const fresh      = isRecent(game.releaseDate, 14);
+  const topThree   = game.rank <= 3;
+  const complexity = game.buildComplexity;
+  const leftBorder = complexity
+    ? `3px solid ${COMPLEXITY_COLOR[complexity]}`
+    : '3px solid transparent';
 
   return (
     <div
@@ -68,8 +77,10 @@ function GameRow({ game, index }) {
         alignItems: 'center',
         gap: 14,
         padding: '11px 14px',
+        paddingLeft: 11,
         background: 'var(--bg-elevated)',
         borderRadius: 'var(--r-md)',
+        borderLeft: leftBorder,
         marginBottom: 6,
         cursor: game.storeUrl ? 'pointer' : 'default',
         transition: 'background 0.15s',
@@ -142,10 +153,33 @@ function GameRow({ game, index }) {
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          marginBottom: game.description ? 3 : 0,
+          marginBottom: (complexity || game.description) ? 4 : 0,
         }}>
           {game.developer}
         </div>
+
+        {/* Build-complexity indicator */}
+        {complexity && (
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 7, marginBottom: game.description ? 3 : 0 }}>
+            <Badge
+              variant={complexity === 'vibe' ? 'ok' : 'warning'}
+              style={{ flexShrink: 0, marginTop: 1 }}
+            >
+              {complexity === 'vibe' ? '⚡ Vibe Coded' : '🔧 Proper Dev'}
+            </Badge>
+            {game.complexityReason && (
+              <span style={{
+                fontSize: 11,
+                color: 'var(--text-2)',
+                lineHeight: 1.4,
+                fontStyle: 'italic',
+              }}>
+                {game.complexityReason}
+              </span>
+            )}
+          </div>
+        )}
+
         {game.description && (
           <div style={{
             fontSize: 11,
@@ -222,6 +256,8 @@ export function TrendingGamesView({ settings, onOpenSettings }) {
 
   // Track which platforms have been loaded to avoid duplicate fetches
   const loadedRef = useRef(new Set());
+  // Track which platforms have been complexity-assessed
+  const complexityAssessedRef = useRef(new Set());
 
   const fetchPlatform = useCallback(async (p, force = false) => {
     if (!force && loadedRef.current.has(p)) return;
@@ -249,6 +285,26 @@ export function TrendingGamesView({ settings, onOpenSettings }) {
 
   useEffect(() => { fetchPlatform('ios'); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // After iOS games load, run a secondary Claude call to assess build complexity
+  useEffect(() => {
+    if (!gameData.ios || !settings?.anthropicKey) return;
+    if (complexityAssessedRef.current.has('ios')) return;
+    complexityAssessedRef.current.add('ios');
+
+    assessAppStoreComplexity(callClaude, parseJSON, gameData.ios)
+      .then(assessments => {
+        setGameData(prev => ({
+          ...prev,
+          ios: prev.ios?.map(g => ({
+            ...g,
+            buildComplexity:  assessments[String(g.rank)]?.complexity ?? null,
+            complexityReason: assessments[String(g.rank)]?.reason    ?? null,
+          })) ?? null,
+        }));
+      })
+      .catch(() => {}); // Complexity is best-effort; silently skip on error
+  }, [gameData.ios]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handlePlatformSwitch = (p) => {
     setPlatform(p);
     setError(null);
@@ -257,6 +313,7 @@ export function TrendingGamesView({ settings, onOpenSettings }) {
 
   const handleRefresh = () => {
     loadedRef.current.delete(platform);
+    complexityAssessedRef.current.delete(platform);
     fetchPlatform(platform, true);
   };
 

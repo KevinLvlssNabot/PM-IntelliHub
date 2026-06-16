@@ -87,14 +87,15 @@ export async function fetchAppStoreTrending(limit = 10) {
 }
 
 /**
- * Uses Claude to surface trending casual/puzzle games on Google Play.
- * Returns AI-curated market intelligence — clearly labelled in the UI as such.
+ * Uses Claude to surface trending casual/puzzle games on Google Play,
+ * including a build-complexity assessment for each title.
+ * Clearly labelled in the UI as AI market analysis.
  */
 export async function fetchGooglePlayTrending(callClaude, parseJSON, limit = 10) {
   const today = new Date().toISOString().split('T')[0];
   const monthAgo = new Date(Date.now() - 30 * 86_400_000).toISOString().split('T')[0];
 
-  const prompt = `Today is ${today}. You are a senior mobile games market analyst.
+  const prompt = `Today is ${today}. You are a senior mobile games market analyst and developer.
 
 Identify the top ${limit} trending casual/puzzle games on Google Play Store that:
 - Were originally released between ${monthAgo} and ${today} (within the last 30 days)
@@ -102,7 +103,9 @@ Identify the top ${limit} trending casual/puzzle games on Google Play Store that
 - Suit short-session gameplay: puzzle, casual, arcade, word, trivia, board, card
 - Explicitly exclude: action-heavy combat, battle royales, full RPGs, sports sims, Fortnite/Pokémon-style titles
 
-Use your most current market knowledge. If uncertain about exact release dates, estimate based on known chart patterns.
+For each game also assess build complexity from a small studio perspective:
+- "vibe": Prototypable in 1-3 days with AI-assisted coding. Criteria: single core mechanic, tap/swipe input, grid or minimal state, no physics engine, no real-time networking, deterministic gameplay.
+- "dev": Requires dedicated engineering. Criteria: physics simulation, real-time systems, complex animations, procedural generation, multiplayer, significant state management.
 
 Respond ONLY with a raw JSON array — no markdown fences, no explanation:
 [{
@@ -113,7 +116,9 @@ Respond ONLY with a raw JSON array — no markdown fences, no explanation:
   "rating": 4.3,
   "reviewCount": 8500,
   "releaseDate": "YYYY-MM-DD",
-  "description": "One sentence on why this game is charting well"
+  "description": "One sentence on why this game is charting well",
+  "buildComplexity": "vibe|dev",
+  "complexityReason": "One sentence on what makes it quick-build or engineering-heavy"
 }]`;
 
   const { text } = await callClaude({ prompt });
@@ -126,4 +131,29 @@ Respond ONLY with a raw JSON array — no markdown fences, no explanation:
         icon: null,
       }))
     : [];
+}
+
+/**
+ * Batch-assesses build complexity for App Store games via Claude.
+ * Returns a map of { [rank]: { complexity: "vibe"|"dev", reason: string } }.
+ */
+export async function assessAppStoreComplexity(callClaude, parseJSON, games) {
+  if (!games || games.length === 0) return {};
+
+  const list = games.map(g => `${g.rank}. "${g.name}" (${g.genre})`).join('\n');
+
+  const prompt = `You are a mobile game developer at a small studio that uses AI-assisted ("vibe coding") tools.
+
+Assess the build complexity of each game listed below:
+- "vibe": Prototypable in 1-3 days with AI tools. Single core mechanic, tap/swipe/tilt input, grid or minimal state, no physics engine, no real-time networking, deterministic.
+- "dev": Requires dedicated engineering effort. Physics simulation, real-time systems, complex animations, procedural generation, multiplayer, significant state management.
+
+Games:
+${list}
+
+Respond ONLY with raw JSON (no markdown), mapping each rank number to its assessment:
+{"1": {"complexity": "vibe", "reason": "one sentence"}, "2": {"complexity": "dev", "reason": "one sentence"}}`;
+
+  const { text } = await callClaude({ prompt });
+  return parseJSON(text);
 }
