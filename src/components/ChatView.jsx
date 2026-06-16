@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { SOURCES, CHAT_SYSTEM_PROMPT } from '../constants.js';
+import { APPS, SOURCES, CHAT_SYSTEM_PROMPT } from '../constants.js';
 import { useClaude } from '../hooks/useClaude.js';
 import { Button } from './ui/Button.jsx';
 
@@ -192,18 +192,26 @@ function TypingIndicator() {
   );
 }
 
-function buildSystemContext(settings) {
+function buildSystemContext(settings, appLabel) {
   const connected = Object.values(SOURCES)
-    .filter(s => settings[s.requiredKey] && s.mcpUrl)
+    .filter(s => settings[s.requiredKey] && s.mcpUrl && !s.comingSoon)
     .map(s => s.label);
   const notConnected = Object.values(SOURCES)
-    .filter(s => !settings[s.requiredKey])
+    .filter(s => !settings[s.requiredKey] && !s.comingSoon)
     .map(s => s.label);
+
+  const hasLinear = connected.includes('Linear');
+  const hasAppsflyer = connected.includes('AppsFlyer');
+
+  const hints = [];
+  if (hasLinear) hints.push(`Linear: the team for this app is named "${appLabel}"`);
+  if (hasAppsflyer) hints.push(`AppsFlyer: search for the app whose ID contains "${appLabel.toLowerCase().replace(/\s+/g, '')}"`);
 
   return `${CHAT_SYSTEM_PROMPT}
 
+Current app: ${appLabel}.
 Connected sources: ${connected.length ? connected.join(', ') : 'none'}.
-Not connected: ${notConnected.length ? notConnected.join(', ') : 'none'}.`;
+Not connected: ${notConnected.length ? notConnected.join(', ') : 'none'}.${hints.length ? `\n\nSource hints:\n${hints.map(h => `- ${h}`).join('\n')}` : ''}`;
 }
 
 function buildMcpList(settings) {
@@ -242,7 +250,8 @@ export function ChatView({ settings, selectedApp, onOpenSettings }) {
 
     try {
       const mcpList = buildMcpList(settings);
-      const systemCtx = buildSystemContext(settings);
+      const appLabel = APPS.find(a => a.id === selectedApp)?.label ?? selectedApp;
+      const systemCtx = buildSystemContext(settings, appLabel);
 
       const apiMessages = newMessages.map(m => ({
         role: m.role,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { SOURCES, DIGEST_SYSTEM_PROMPT } from '../constants.js';
+import { APPS, SOURCES, DIGEST_SYSTEM_PROMPT } from '../constants.js';
 import { useClaude } from '../hooks/useClaude.js';
 import { Card } from './ui/Card.jsx';
 import { Badge } from './ui/Badge.jsx';
@@ -16,13 +16,26 @@ function buildMcpList(settings) {
     }));
 }
 
-function buildDigestPrompt(selectedApp, mcpList) {
-  const sourceNames = mcpList.map(m => m.name).join(', ') || 'none';
-  return `You are analyzing data for the "${selectedApp}" product.
-Connected data sources: ${sourceNames || 'none'}.
+function buildDigestPrompt(appLabel, mcpList) {
+  const hasLinear = mcpList.some(m => m.name === 'linear');
+  const hasAppsflyer = mcpList.some(m => m.name === 'appsflyer');
 
-${mcpList.length > 0
-    ? 'Use the available MCP tools to gather real data, then produce the digest JSON.'
+  const sourceInstructions = [];
+  if (hasLinear) {
+    sourceInstructions.push(
+      `- Linear: filter by the team named exactly "${appLabel}". Fetch issues with status "In Progress" or "In Review" that have not been updated in 3+ days.`
+    );
+  }
+  if (hasAppsflyer) {
+    sourceInstructions.push(
+      `- AppsFlyer: find the app whose App ID contains "${appLabel.toLowerCase().replace(/\s+/g, '')}" or a close variant of it (e.g. "thrillzandroid", "playsmart"). Fetch installs and revenue for the last 24h vs 7-day average.`
+    );
+  }
+
+  return `You are producing a daily PM digest for the "${appLabel}" product.
+
+${sourceInstructions.length > 0
+    ? `Source-specific instructions:\n${sourceInstructions.join('\n')}\n\nUse the MCP tools above to gather real data.`
     : 'No live data sources are connected. Produce a placeholder digest that clearly notes data is unavailable and suggests connecting sources in Settings.'}
 
 Respond ONLY with raw JSON (no markdown fences) matching this exact schema:
@@ -197,7 +210,8 @@ export function DigestView({ settings, selectedApp, onOpenSettings }) {
     setError(null);
     try {
       const mcpList = buildMcpList(settings);
-      const prompt = buildDigestPrompt(selectedApp, mcpList);
+      const appLabel = APPS.find(a => a.id === selectedApp)?.label ?? selectedApp;
+      const prompt = buildDigestPrompt(appLabel, mcpList);
       const { text } = await callClaude({
         prompt,
         mcpList,
