@@ -54,6 +54,7 @@ export default function App() {
             />
             <SourceCards
               settings={settings}
+              selectedApp={selectedApp}
               onOpenSettings={handleOpenSettings}
             />
           </div>

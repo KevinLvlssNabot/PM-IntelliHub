@@ -5,10 +5,10 @@ export const APPS = [
 ];
 
 export const SOURCES = {
-  linear:       { id: "linear",     label: "Linear",        icon: "🎫", mcpUrl: "https://mcp.linear.app/mcp",         requiredKey: "linearToken" },
-  sentry:       { id: "sentry",     label: "App Stability", icon: "🔴", mcpUrl: "https://mcp.sentry.dev/mcp",          requiredKey: "sentryToken" },
-  amplitude:    { id: "amplitude",  label: "Engagement",    icon: "🎮", mcpUrl: "https://mcp.eu.amplitude.com/mcp",   requiredKey: "amplitudeToken" },
-  appsflyer:    { id: "appsflyer",  label: "Acquisition",   icon: "📥", mcpUrl: "https://mcp.appsflyer.com/auth/mcp", requiredKey: "appsflyerToken" },
+  linear:       { id: "linear",     label: "Linear",        icon: "🎫", mcpUrl: "https://mcp.linear.app/mcp",         requiredKey: "linearToken",   description: "Issues & stale tickets" },
+  sentry:       { id: "sentry",     label: "Sentry",        icon: "🔴", mcpUrl: "https://mcp.sentry.dev/mcp",          requiredKey: "sentryToken",    description: "Crash rates & ANR" },
+  amplitude:    { id: "amplitude",  label: "Amplitude",     icon: "🎮", mcpUrl: "https://mcp.eu.amplitude.com/mcp",   requiredKey: "amplitudeToken", description: "DAU & session data" },
+  appsflyer:    { id: "appsflyer",  label: "AppsFlyer",     icon: "📥", mcpUrl: "https://mcp.appsflyer.com/auth/mcp", requiredKey: "appsflyerToken", description: "Installs & revenue" },
   appstore:     { id: "appstore",   label: "App Store",     icon: "🍎", mcpUrl: null, requiredKey: "appstoreKey",    comingSoon: true },
   googleplay:   { id: "googleplay", label: "Google Play",   icon: "🤖", mcpUrl: null, requiredKey: "googleplayKey", comingSoon: true },
 };
