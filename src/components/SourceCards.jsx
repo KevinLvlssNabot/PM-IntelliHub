@@ -15,7 +15,7 @@ function LinearCardContent({ settings }) {
   );
 }
 
-const APP_SCOPED_SOURCES = new Set(['sentry', 'amplitude', 'appsflyer', 'appstore', 'googleplay']);
+const APP_SCOPED_SOURCES = new Set(['sentry', 'devtodev', 'appsflyer', 'appstore', 'googleplay']);
 
 function SourceCard({ source, settings, appLabel, onOpenSettings }) {
   const hasToken = Boolean(settings[source.requiredKey]);
@@ -35,8 +35,8 @@ function SourceCard({ source, settings, appLabel, onOpenSettings }) {
       >
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-          <div>
-            <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 600, fontSize: 14, color: 'var(--text-1)' }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 600, fontSize: 14, color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {source.label}
             </div>
             {isAppScoped && (
@@ -45,13 +45,15 @@ function SourceCard({ source, settings, appLabel, onOpenSettings }) {
               </div>
             )}
           </div>
-          {isComingSoon ? (
-            <Badge variant="neutral">Coming soon</Badge>
-          ) : hasToken ? (
-            <Badge variant="live" dot>Live</Badge>
-          ) : (
-            <Badge variant="neutral">Not connected</Badge>
-          )}
+          <div style={{ flexShrink: 0 }}>
+            {isComingSoon ? (
+              <Badge variant="neutral">Coming soon</Badge>
+            ) : hasToken ? (
+              <Badge variant="live" dot>Live</Badge>
+            ) : (
+              <Badge variant="neutral">Not connected</Badge>
+            )}
+          </div>
         </div>
 
         {/* Description */}
@@ -150,7 +152,7 @@ export function SourceCards({ settings, selectedApp, onOpenSettings }) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
           gap: 12,
         }}
       >
