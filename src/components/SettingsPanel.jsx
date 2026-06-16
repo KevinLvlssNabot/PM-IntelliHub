@@ -200,7 +200,7 @@ export function SettingsPanel({ settings, onSave, onClose, isWizard = false }) {
           Connect data sources to enrich your daily digest with real data.
         </p>
 
-        {SOURCE_LIST.filter(s => !s.comingSoon).map(source => (
+        {SOURCE_LIST.map(source => (
           <FieldRow
             key={source.id}
             label={`${source.label} Token`}
@@ -209,30 +209,6 @@ export function SettingsPanel({ settings, onSave, onClose, isWizard = false }) {
             onChange={set(source.requiredKey)}
             placeholder={`Paste your ${source.label} token here…`}
           />
-        ))}
-
-        {SOURCE_LIST.filter(s => s.comingSoon).map(source => (
-          <div
-            key={source.id}
-            style={{
-              marginBottom: 10,
-              padding: '10px 14px',
-              background: 'var(--bg-elevated)',
-              borderRadius: 'var(--r-md)',
-              border: '1px solid var(--border)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              opacity: 0.5,
-            }}
-          >
-            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--text-2)' }}>
-              {source.label}
-            </span>
-            <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-3)' }}>
-              Coming soon
-            </span>
-          </div>
         ))}
 
         {/* Actions */}

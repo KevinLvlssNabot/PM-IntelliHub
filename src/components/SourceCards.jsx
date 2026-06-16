@@ -19,14 +19,14 @@ const APP_SCOPED_SOURCES = new Set(['sentry', 'devtodev', 'appsflyer', 'appstore
 
 function SourceCard({ source, settings, appLabel, onOpenSettings }) {
   const hasToken = Boolean(settings[source.requiredKey]);
-  const isComingSoon = Boolean(source.comingSoon);
+  const showComingSoon = Boolean(source.comingSoon) && !hasToken;
   const isAppScoped = APP_SCOPED_SOURCES.has(source.id);
 
   return (
     <div style={{ position: 'relative' }}>
       <Card
         style={{
-          opacity: isComingSoon ? 0.5 : 1,
+          opacity: showComingSoon ? 0.5 : 1,
           display: 'flex',
           flexDirection: 'column',
           gap: 10,
@@ -46,7 +46,7 @@ function SourceCard({ source, settings, appLabel, onOpenSettings }) {
             )}
           </div>
           <div style={{ flexShrink: 0 }}>
-            {isComingSoon ? (
+            {showComingSoon ? (
               <Badge variant="neutral">Coming soon</Badge>
             ) : hasToken ? (
               <Badge variant="live" dot>Live</Badge>
@@ -64,17 +64,17 @@ function SourceCard({ source, settings, appLabel, onOpenSettings }) {
         )}
 
         {/* Body */}
-        {!isComingSoon && hasToken && source.id === 'linear' && (
+        {!showComingSoon && hasToken && source.id === 'linear' && (
           <LinearCardContent settings={settings} />
         )}
 
-        {!isComingSoon && hasToken && source.id !== 'linear' && (
+        {!showComingSoon && hasToken && source.id !== 'linear' && (
           <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5 }}>
             Connected — data appears in your Daily Digest.
           </div>
         )}
 
-        {!isComingSoon && !hasToken && (
+        {!showComingSoon && !hasToken && (
           <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end' }}>
             <Button
               variant="secondary"
@@ -88,7 +88,7 @@ function SourceCard({ source, settings, appLabel, onOpenSettings }) {
       </Card>
 
       {/* Coming soon overlay */}
-      {isComingSoon && (
+      {showComingSoon && (
         <div
           style={{
             position: 'absolute',
@@ -127,7 +127,7 @@ function SourceCard({ source, settings, appLabel, onOpenSettings }) {
 
 export function SourceCards({ settings, selectedApp, onOpenSettings }) {
   const sourceList = Object.values(SOURCES);
-  const connectedCount = sourceList.filter(s => settings[s.requiredKey] && !s.comingSoon).length;
+  const connectedCount = sourceList.filter(s => settings[s.requiredKey]).length;
   const appLabel = APPS.find(a => a.id === selectedApp)?.label ?? selectedApp;
 
   return (
