@@ -200,16 +200,23 @@ export function SettingsPanel({ settings, onSave, onClose, isWizard = false }) {
           Connect data sources to enrich your daily digest with real data.
         </p>
 
-        {SOURCE_LIST.map(source => (
-          <FieldRow
-            key={source.id}
-            label={`${source.label} Token`}
-            id={source.requiredKey}
-            value={draft[source.requiredKey] || ''}
-            onChange={set(source.requiredKey)}
-            placeholder={`Paste your ${source.label} token here…`}
-          />
-        ))}
+        {SOURCE_LIST.map(source => {
+          const fieldType = source.fieldType || 'password';
+          const isUrl = fieldType === 'url';
+          return (
+            <FieldRow
+              key={source.id}
+              label={isUrl ? `${source.label} Worker URL` : `${source.label} Token`}
+              id={source.requiredKey}
+              value={draft[source.requiredKey] || ''}
+              onChange={set(source.requiredKey)}
+              placeholder={isUrl
+                ? `https://pm-intellihub-gplay.your-subdomain.workers.dev`
+                : `Paste your ${source.label} token here…`}
+              type={isUrl ? 'text' : 'password'}
+            />
+          );
+        })}
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: 12, marginTop: 28, justifyContent: 'flex-end' }}>

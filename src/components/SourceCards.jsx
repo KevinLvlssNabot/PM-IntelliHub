@@ -16,6 +16,7 @@ function LinearCardContent({ settings }) {
 }
 
 const APP_SCOPED_SOURCES = new Set(['sentry', 'devtodev', 'appsflyer', 'appstore', 'googleplay']);
+// Note: googleplay uses appScoped flag from SOURCES and is live (not comingSoon)
 
 function SourceCard({ source, settings, appLabel, onOpenSettings }) {
   const hasToken = Boolean(settings[source.requiredKey]);

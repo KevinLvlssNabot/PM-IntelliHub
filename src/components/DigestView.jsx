@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { APPS, SOURCES, DIGEST_SYSTEM_PROMPT } from '../constants.js';
 import { useClaude } from '../hooks/useClaude.js';
+import { fetchGooglePlayMetrics } from '../utils/googleplay.js';
 import { Card } from './ui/Card.jsx';
 import { Badge } from './ui/Badge.jsx';
 import { Button } from './ui/Button.jsx';
@@ -16,7 +17,7 @@ function buildMcpList(settings) {
     }));
 }
 
-function buildDigestPrompt(appLabel, mcpList) {
+function buildDigestPrompt(appLabel, mcpList, googlePlayData) {
   const hasLinear = mcpList.some(m => m.name === 'linear');
   const hasAppsflyer = mcpList.some(m => m.name === 'appsflyer');
 
@@ -32,11 +33,17 @@ function buildDigestPrompt(appLabel, mcpList) {
     );
   }
 
+  const gpSection = googlePlayData && !googlePlayData.error
+    ? `\nPre-fetched Google Play data (use this directly, do not re-fetch):\n${JSON.stringify(googlePlayData, null, 2)}`
+    : googlePlayData?.error
+    ? `\nGoogle Play data fetch failed: ${googlePlayData.error}`
+    : '';
+
   return `You are producing a daily PM digest for the "${appLabel}" product.
 
 ${sourceInstructions.length > 0
     ? `Source-specific instructions:\n${sourceInstructions.join('\n')}\n\nUse the MCP tools above to gather real data.`
-    : 'No live data sources are connected. Produce a placeholder digest that clearly notes data is unavailable and suggests connecting sources in Settings.'}
+    : 'No live data sources are connected. Produce a placeholder digest that clearly notes data is unavailable and suggests connecting sources in Settings.'}${gpSection}
 
 Respond ONLY with raw JSON (no markdown fences) matching this exact schema:
 {
@@ -210,8 +217,17 @@ export function DigestView({ settings, selectedApp, onOpenSettings }) {
     setError(null);
     try {
       const mcpList = buildMcpList(settings);
-      const appLabel = APPS.find(a => a.id === selectedApp)?.label ?? selectedApp;
-      const prompt = buildDigestPrompt(appLabel, mcpList);
+      const app = APPS.find(a => a.id === selectedApp);
+      const appLabel = app?.label ?? selectedApp;
+
+      // Pre-fetch Google Play data if worker URL and package name are available
+      let googlePlayData = null;
+      const hasAndroid = app?.platform === 'android' || app?.platform === 'both';
+      if (settings.googlePlayWorkerUrl && app?.packageName && hasAndroid) {
+        googlePlayData = await fetchGooglePlayMetrics(settings.googlePlayWorkerUrl, app.packageName);
+      }
+
+      const prompt = buildDigestPrompt(appLabel, mcpList, googlePlayData);
       const { text } = await callClaude({
         prompt,
         mcpList,
