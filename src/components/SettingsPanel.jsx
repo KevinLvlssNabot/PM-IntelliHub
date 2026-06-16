@@ -13,12 +13,12 @@ function FieldRow({ label, id, value, onChange, placeholder, type = 'password', 
         style={{
           display: 'block',
           fontFamily: 'var(--font-mono)',
-          fontSize: 9,
-          fontWeight: 600,
-          letterSpacing: '0.1em',
+          fontSize: 10,
+          fontWeight: 500,
+          letterSpacing: '0.08em',
           textTransform: 'uppercase',
-          color: 'var(--text-3)',
-          marginBottom: 7,
+          color: 'var(--text-2)',
+          marginBottom: 6,
         }}
       >
         {label}
@@ -47,7 +47,9 @@ function FieldRow({ label, id, value, onChange, placeholder, type = 'password', 
               border: 'none',
               cursor: 'pointer',
               color: 'var(--text-3)',
-              fontSize: 12,
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              letterSpacing: '0.05em',
               padding: 0,
             }}
           >
@@ -56,7 +58,7 @@ function FieldRow({ label, id, value, onChange, placeholder, type = 'password', 
         )}
       </div>
       {helpText && (
-        <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 4 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-3)', marginTop: 5, lineHeight: 1.5 }}>
           {helpText}
         </p>
       )}
@@ -66,11 +68,25 @@ function FieldRow({ label, id, value, onChange, placeholder, type = 'password', 
 
 function SectionTitle({ children }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, marginTop: 24 }}>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-3)', flexShrink: 0 }}>
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      marginBottom: 16,
+      marginTop: 24,
+      paddingBottom: 10,
+      borderBottom: '1px solid var(--border)',
+    }}>
+      <h3 style={{
+        fontFamily: 'var(--font-display)',
+        fontStyle: 'italic',
+        fontWeight: 300,
+        fontSize: 18,
+        color: 'var(--text-1)',
+        flex: '0 0 auto',
+      }}>
         {children}
-      </span>
-      <span style={{ height: 1, background: 'var(--border)', flex: 1 }} />
+      </h3>
     </div>
   );
 }
@@ -108,7 +124,7 @@ export function SettingsPanel({ settings, onSave, onClose, isWizard = false }) {
     : {
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.7)',
+        background: 'rgba(8,10,14,0.85)',
         zIndex: 1000,
         display: 'flex',
         alignItems: 'center',
@@ -122,7 +138,7 @@ export function SettingsPanel({ settings, onSave, onClose, isWizard = false }) {
         style={{
           background: 'var(--bg-surface)',
           border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-card)',
+          borderRadius: 'var(--r-lg)',
           width: '100%',
           maxWidth: 560,
           maxHeight: '90vh',
@@ -132,12 +148,15 @@ export function SettingsPanel({ settings, onSave, onClose, isWizard = false }) {
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
           <div>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 300, fontSize: 24, marginBottom: 6, color: 'var(--text-1)' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 8 }}>
+              {isWizard ? 'Setup' : 'Configuration'}
+            </div>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontWeight: 300, fontSize: 26, color: 'var(--text-1)', marginBottom: 6 }}>
               {isWizard ? 'Welcome to PM IntelliHub' : 'Settings'}
             </h2>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-3)', letterSpacing: '0.05em' }}>
+            <p style={{ fontSize: 13, color: 'var(--text-2)' }}>
               {isWizard
                 ? 'Add your Anthropic API key to get started. Other integrations are optional.'
                 : 'Manage your API keys and integrations.'}
@@ -148,13 +167,14 @@ export function SettingsPanel({ settings, onSave, onClose, isWizard = false }) {
               onClick={onClose}
               style={{
                 background: 'none',
-                border: 'none',
+                border: '1px solid var(--border)',
                 cursor: 'pointer',
                 color: 'var(--text-3)',
-                fontSize: 20,
+                fontSize: 16,
                 lineHeight: 1,
-                padding: '4px 8px',
-                borderRadius: 4,
+                padding: '4px 9px',
+                borderRadius: 'var(--r-sm)',
+                fontFamily: 'var(--font-ui)',
               }}
               title="Close"
             >
@@ -176,14 +196,14 @@ export function SettingsPanel({ settings, onSave, onClose, isWizard = false }) {
 
         {/* Integrations */}
         <SectionTitle>Integrations (optional)</SectionTitle>
-        <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 16 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-3)', marginBottom: 16, lineHeight: 1.6 }}>
           Connect data sources to enrich your daily digest with real data.
         </p>
 
         {SOURCE_LIST.filter(s => !s.comingSoon).map(source => (
           <FieldRow
             key={source.id}
-            label={`${source.icon} ${source.label} Token`}
+            label={`${source.label} Token`}
             id={source.requiredKey}
             value={draft[source.requiredKey] || ''}
             onChange={set(source.requiredKey)}
@@ -195,29 +215,28 @@ export function SettingsPanel({ settings, onSave, onClose, isWizard = false }) {
           <div
             key={source.id}
             style={{
-              marginBottom: 16,
-              padding: '10px 12px',
+              marginBottom: 10,
+              padding: '10px 14px',
               background: 'var(--bg-elevated)',
-              borderRadius: 'var(--radius-badge)',
+              borderRadius: 'var(--r-md)',
               border: '1px solid var(--border)',
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              opacity: 0.6,
+              opacity: 0.5,
             }}
           >
-            <span>{source.icon}</span>
-            <span style={{ fontSize: 14, color: 'var(--text-2)' }}>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--text-2)' }}>
               {source.label}
             </span>
-            <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-3)' }}>
+            <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-3)' }}>
               Coming soon
             </span>
           </div>
         ))}
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: 12, marginTop: 24, justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: 12, marginTop: 28, justifyContent: 'flex-end' }}>
           {!isWizard && (
             <Button variant="secondary" onClick={onClose}>
               Cancel
