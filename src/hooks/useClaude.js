@@ -35,14 +35,19 @@ export function useClaude(settings) {
         }));
       }
 
+      const headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      };
+
+      if (mcpList && mcpList.length > 0) {
+        headers['anthropic-beta'] = 'mcp-client-2025-11-20';
+      }
+
       const response = await fetch(ANTHROPIC_API_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-beta': 'mcp-client-2025-11-20',
-        },
+        headers,
         body: JSON.stringify(body),
       });
 
