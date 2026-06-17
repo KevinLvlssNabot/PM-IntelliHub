@@ -4,7 +4,7 @@ const PLAY_SMART_GENRES = new Set([
   'Word', 'Trivia', 'Educational', 'Family', 'Kids', 'Music',
 ]);
 
-const ITUNES_GAMES_RSS = 'https://itunes.apple.com/us/rss/topfreegames/limit=100/json';
+const APPSTORE_GAMES_RSS = 'https://rss.applemarketingtools.com/api/v2/us/apps/top-free/100/apps.json';
 const ITUNES_LOOKUP = 'https://itunes.apple.com/lookup';
 
 /**
@@ -12,22 +12,19 @@ const ITUNES_LOOKUP = 'https://itunes.apple.com/lookup';
  * and filters them down to casual/puzzle genres that fit Play Smart.
  */
 export async function fetchAppStoreTrending(limit = 10) {
-  const rssRes = await fetch(ITUNES_GAMES_RSS);
+  const rssRes = await fetch(APPSTORE_GAMES_RSS);
   if (!rssRes.ok) throw new Error(`App Store RSS returned ${rssRes.status}`);
   const rssData = await rssRes.json();
 
-  const entries = (rssData.feed?.entry ?? []).map((e, i) => {
-    const images = e['im:image'] ?? [];
-    return {
-      id: e['im:id']?.label,
-      name: e['im:name']?.label ?? '',
-      artist: e['im:artist']?.label ?? '',
-      releaseDateStr: e['im:releaseDate']?.label ?? '',
-      icon: images[images.length - 1]?.label ?? images[0]?.label ?? null,
-      rssGenre: e['category']?.attributes?.term ?? '',
-      chartRank: i + 1,
-    };
-  }).filter(e => e.id);
+  const entries = (rssData.feed?.results ?? []).map((e, i) => ({
+    id: e.id,
+    name: e.name ?? '',
+    artist: e.artistName ?? '',
+    releaseDateStr: e.releaseDate ?? '',
+    icon: e.artworkUrl100 ?? null,
+    rssGenre: e.genres?.[0]?.name ?? '',
+    chartRank: i + 1,
+  })).filter(e => e.id);
 
   // Prefer games released within 30 days; loosen window progressively if too few
   let recent = [];
