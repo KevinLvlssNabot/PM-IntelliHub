@@ -18,6 +18,13 @@ export function Layout({ children, selectedApp, onSelectApp, activeTab, onSelect
     both: '📱',
   };
 
+  const groupedApps = Object.entries(
+    APPS.reduce((acc, app) => {
+      (acc[app.group] = acc[app.group] || []).push(app);
+      return acc;
+    }, {})
+  );
+
   return (
     <div
       style={{
@@ -39,54 +46,63 @@ export function Layout({ children, selectedApp, onSelectApp, activeTab, onSelect
           borderBottom: '1px solid var(--color-border)',
           flexShrink: 0,
           gap: 16,
-          flexWrap: 'wrap',
         }}
       >
         {/* Brand */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 8, flexShrink: 0 }}>
           <span style={{ fontSize: 18 }}>🧠</span>
           <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text-primary)', whiteSpace: 'nowrap' }}>
             PM IntelliHub
           </span>
         </div>
 
-        {/* App switcher tabs */}
-        <div
-          style={{
-            display: 'flex',
-            gap: 2,
-            flex: 1,
-            minWidth: 0,
-            overflowX: 'auto',
-          }}
-        >
-          {APPS.map(app => {
-            const isActive = selectedApp === app.id;
-            return (
-              <button
-                key={app.id}
-                onClick={() => onSelectApp(app.id)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '6px 12px',
-                  borderRadius: 'var(--radius-badge)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: 13,
-                  fontWeight: isActive ? 600 : 400,
-                  background: isActive ? 'var(--color-accent)' : 'transparent',
-                  color: isActive ? '#fff' : 'var(--color-text-secondary)',
-                  whiteSpace: 'nowrap',
-                  transition: 'background 0.15s, color 0.15s',
-                }}
-              >
-                <span>{platformIcon[app.platform] || '📱'}</span>
-                <span>{app.label}</span>
-              </button>
-            );
-          })}
+        {/* App switcher — grouped */}
+        <div style={{ display: 'flex', gap: 4, flex: 1, minWidth: 0, overflowX: 'auto', alignItems: 'center' }}>
+          {groupedApps.map(([group, apps], gi) => (
+            <div key={group} style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              {gi > 0 && (
+                <span style={{ width: 1, height: 16, background: 'var(--color-border)', margin: '0 6px', flexShrink: 0 }} />
+              )}
+              <span style={{
+                fontSize: 10,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: 'var(--color-text-tertiary)',
+                marginRight: 4,
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}>{group}</span>
+              {apps.map(app => {
+                const isActive = selectedApp === app.id;
+                return (
+                  <button
+                    key={app.id}
+                    onClick={() => onSelectApp(app.id)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      padding: '4px 10px',
+                      borderRadius: 'var(--radius-badge)',
+                      border: '1px solid',
+                      borderColor: isActive ? 'var(--color-accent)' : 'transparent',
+                      cursor: 'pointer',
+                      fontSize: 12,
+                      fontWeight: isActive ? 600 : 400,
+                      background: isActive ? 'rgba(99,102,241,0.12)' : 'transparent',
+                      color: isActive ? 'var(--color-accent-hover)' : 'var(--color-text-secondary)',
+                      whiteSpace: 'nowrap',
+                      transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <span style={{ fontSize: 11 }}>{platformIcon[app.platform] || '📱'}</span>
+                    <span>{app.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </div>
 
         {/* Settings gear */}
@@ -109,12 +125,12 @@ export function Layout({ children, selectedApp, onSelectApp, activeTab, onSelect
           background: 'var(--color-bg-secondary)',
           borderBottom: '1px solid var(--color-border)',
           flexShrink: 0,
-          gap: 0,
         }}
       >
         {[
-          { id: 'digest', label: '📊 Daily Digest' },
-          { id: 'chat',   label: '💬 Ask AI' },
+          { id: 'digest',   label: '📊 Daily Digest' },
+          { id: 'trending', label: '🎮 Trending Games' },
+          { id: 'chat',     label: '💬 Ask AI' },
         ].map(tab => {
           const isActive = activeTab === tab.id;
           return (

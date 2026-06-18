@@ -6,6 +6,7 @@ import { SettingsPanel } from './components/SettingsPanel.jsx';
 import { DigestView } from './components/DigestView.jsx';
 import { ChatView } from './components/ChatView.jsx';
 import { SourceCards } from './components/SourceCards.jsx';
+import { TrendingView } from './components/TrendingView.jsx';
 
 export default function App() {
   const { settings, updateSettings, isFirstRun } = useSettings();
@@ -54,9 +55,14 @@ export default function App() {
             />
             <SourceCards
               settings={settings}
+              selectedApp={selectedApp}
               onOpenSettings={handleOpenSettings}
             />
           </div>
+        )}
+
+        {activeTab === 'trending' && (
+          <TrendingView />
         )}
 
         {activeTab === 'chat' && (

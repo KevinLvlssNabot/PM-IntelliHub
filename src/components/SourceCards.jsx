@@ -1,11 +1,12 @@
 import React from 'react';
-import { SOURCES } from '../constants.js';
+import { SOURCES, APPS } from '../constants.js';
 import { Card } from './ui/Card.jsx';
 import { Badge } from './ui/Badge.jsx';
 import { Button } from './ui/Button.jsx';
 
-function LinearCardContent({ settings }) {
-  // Placeholder — real data comes from the digest or a dedicated call
+const APP_SCOPED_SOURCES = new Set(['sentry', 'devtodev', 'appsflyer', 'appstore', 'googleplay']);
+
+function LinearCardContent() {
   return (
     <div style={{ marginTop: 8 }}>
       <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', marginBottom: 6 }}>Live connection</div>
@@ -16,15 +17,16 @@ function LinearCardContent({ settings }) {
   );
 }
 
-function SourceCard({ source, settings, onOpenSettings }) {
+function SourceCard({ source, settings, appLabel, onOpenSettings }) {
   const hasToken = Boolean(settings[source.requiredKey]);
-  const isComingSoon = Boolean(source.comingSoon);
+  const showComingSoon = Boolean(source.comingSoon) && !hasToken;
+  const isAppScoped = APP_SCOPED_SOURCES.has(source.id);
 
   return (
     <div style={{ position: 'relative' }}>
       <Card
         style={{
-          opacity: isComingSoon ? 0.6 : 1,
+          opacity: showComingSoon ? 0.6 : 1,
           display: 'flex',
           flexDirection: 'column',
           gap: 10,
@@ -32,42 +34,64 @@ function SourceCard({ source, settings, onOpenSettings }) {
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 20 }}>{source.icon}</span>
-            <span style={{ fontWeight: 600, fontSize: 14 }}>{source.label}</span>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+            <div style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: source.iconBg || 'var(--color-bg-tertiary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: 13,
+              color: source.iconColor || 'var(--color-text-secondary)',
+              flexShrink: 0,
+            }}>
+              {source.initial || source.label[0]}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {source.label}
+              </div>
+              {isAppScoped && appLabel && (
+                <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', marginTop: 2 }}>
+                  for {appLabel}
+                </div>
+              )}
+            </div>
           </div>
-          {isComingSoon ? (
-            <Badge variant="neutral">Coming soon</Badge>
-          ) : hasToken ? (
-            <Badge variant="ok" dot>Live</Badge>
-          ) : (
-            <Badge variant="neutral">Not connected</Badge>
-          )}
+          <div style={{ flexShrink: 0 }}>
+            {showComingSoon ? (
+              <Badge variant="neutral">Coming soon</Badge>
+            ) : hasToken ? (
+              <Badge variant="ok" dot>Live</Badge>
+            ) : (
+              <Badge variant="neutral">Not connected</Badge>
+            )}
+          </div>
         </div>
 
-        {/* Body */}
-        {!isComingSoon && hasToken && source.id === 'linear' && (
-          <LinearCardContent settings={settings} />
+        {/* Description */}
+        {source.description && (
+          <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', lineHeight: 1.5 }}>
+            {source.description}
+          </div>
         )}
 
-        {!isComingSoon && hasToken && source.id !== 'linear' && (
+        {/* Body */}
+        {!showComingSoon && hasToken && source.id === 'linear' && <LinearCardContent />}
+
+        {!showComingSoon && hasToken && source.id !== 'linear' && (
           <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
             Connected. Data will appear in your Daily Digest.
           </div>
         )}
 
-        {!isComingSoon && !hasToken && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 8 }}>
-            <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)', lineHeight: 1.5, margin: 0 }}>
-              Connect {source.label} to include it in your AI digest.
-            </p>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onOpenSettings}
-              style={{ alignSelf: 'flex-start' }}
-            >
+        {!showComingSoon && !hasToken && (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end' }}>
+            <Button variant="secondary" size="sm" onClick={onOpenSettings}>
               Connect →
             </Button>
           </div>
@@ -75,7 +99,7 @@ function SourceCard({ source, settings, onOpenSettings }) {
       </Card>
 
       {/* Coming soon overlay */}
-      {isComingSoon && (
+      {showComingSoon && (
         <div
           style={{
             position: 'absolute',
@@ -84,13 +108,15 @@ function SourceCard({ source, settings, onOpenSettings }) {
             alignItems: 'center',
             justifyContent: 'center',
             borderRadius: 'var(--radius-card)',
-            background: 'rgba(0,0,0,0.3)',
+            background: 'rgba(0,0,0,0.35)',
+            backgroundImage: 'repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0, rgba(255,255,255,0.02) 1px, transparent 0, transparent 50%)',
+            backgroundSize: '8px 8px',
             pointerEvents: 'none',
           }}
         >
           <span
             style={{
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: 700,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
@@ -109,9 +135,10 @@ function SourceCard({ source, settings, onOpenSettings }) {
   );
 }
 
-export function SourceCards({ settings, onOpenSettings }) {
+export function SourceCards({ settings, selectedApp, onOpenSettings }) {
   const sourceList = Object.values(SOURCES);
-  const connectedCount = sourceList.filter(s => settings[s.requiredKey] && !s.comingSoon).length;
+  const connectedCount = sourceList.filter(s => settings[s.requiredKey]).length;
+  const appLabel = APPS.find(a => a.id === selectedApp)?.label ?? selectedApp;
 
   return (
     <div>
@@ -119,7 +146,7 @@ export function SourceCards({ settings, onOpenSettings }) {
         <div>
           <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>Data Sources</h3>
           <p style={{ fontSize: 13, color: 'var(--color-text-tertiary)' }}>
-            {connectedCount} of {sourceList.filter(s => !s.comingSoon).length} sources connected
+            {connectedCount} of {sourceList.filter(s => !s.comingSoon).length} connected
           </p>
         </div>
         <Button variant="ghost" size="sm" onClick={onOpenSettings}>
@@ -130,7 +157,7 @@ export function SourceCards({ settings, onOpenSettings }) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
           gap: 12,
         }}
       >
@@ -139,6 +166,7 @@ export function SourceCards({ settings, onOpenSettings }) {
             key={source.id}
             source={source}
             settings={settings}
+            appLabel={appLabel}
             onOpenSettings={onOpenSettings}
           />
         ))}
