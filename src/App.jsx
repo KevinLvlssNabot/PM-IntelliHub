@@ -39,7 +39,6 @@ export default function App() {
         selectedApp={selectedApp}
         onSelectApp={(appId) => {
           setSelectedApp(appId);
-          // Reset to digest tab when switching apps
           setActiveTab('digest');
         }}
         activeTab={activeTab}

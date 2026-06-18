@@ -4,6 +4,8 @@ import { Card } from './ui/Card.jsx';
 import { Badge } from './ui/Badge.jsx';
 import { Button } from './ui/Button.jsx';
 
+const APP_SCOPED_SOURCES = new Set(['sentry', 'devtodev', 'appsflyer', 'appstore', 'googleplay']);
+
 function LinearCardContent({ settings }) {
   return (
     <div style={{ marginTop: 8 }}>
@@ -14,9 +16,6 @@ function LinearCardContent({ settings }) {
     </div>
   );
 }
-
-const APP_SCOPED_SOURCES = new Set(['sentry', 'devtodev', 'appsflyer', 'appstore', 'googleplay']);
-// Note: googleplay uses appScoped flag from SOURCES and is live (not comingSoon)
 
 function SourceCard({ source, settings, appLabel, onOpenSettings }) {
   const hasToken = Boolean(settings[source.requiredKey]);
@@ -36,15 +35,33 @@ function SourceCard({ source, settings, appLabel, onOpenSettings }) {
       >
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 600, fontSize: 14, color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {source.label}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+            <div style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: source.iconBg || 'var(--bg-elevated)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: 'var(--font-ui)',
+              fontWeight: 700,
+              fontSize: 13,
+              color: source.iconColor || 'var(--text-2)',
+              flexShrink: 0,
+            }}>
+              {source.initial || source.label[0]}
             </div>
-            {isAppScoped && (
-              <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 13, color: 'var(--text-3)', marginTop: 2 }}>
-                for {appLabel}
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 600, fontSize: 14, color: 'var(--text-1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {source.label}
               </div>
-            )}
+              {isAppScoped && (
+                <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 13, color: 'var(--text-3)', marginTop: 2 }}>
+                  for {appLabel}
+                </div>
+              )}
+            </div>
           </div>
           <div style={{ flexShrink: 0 }}>
             {showComingSoon ? (

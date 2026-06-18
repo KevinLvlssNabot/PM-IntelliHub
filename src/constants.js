@@ -10,12 +10,12 @@ export const APPS = [
 ];
 
 export const SOURCES = {
-  linear:       { id: "linear",     label: "Linear",        icon: "🎫", mcpUrl: "https://mcp.linear.app/mcp",         requiredKey: "linearToken",   description: "Issues & stale tickets" },
-  sentry:       { id: "sentry",     label: "Sentry",        icon: "🔴", mcpUrl: "https://mcp.sentry.dev/mcp",          requiredKey: "sentryToken",    description: "Crash rates & ANR", comingSoon: true },
-  devtodev:     { id: "devtodev",   label: "DevToDev",      icon: "🎮", mcpUrl: null,                                 requiredKey: "devtodevToken",  description: "DAU & session data", comingSoon: true },
-  appsflyer:    { id: "appsflyer",  label: "AppsFlyer",     icon: "📥", mcpUrl: "https://mcp.appsflyer.com/auth/mcp", requiredKey: "appsflyerToken", description: "Installs & revenue" },
-  appstore:     { id: "appstore",   label: "App Store",     icon: "🍎", mcpUrl: null, requiredKey: "appstoreKey",        comingSoon: true },
-  googleplay:   { id: "googleplay", label: "Google Play",   icon: "🤖", mcpUrl: null, requiredKey: "googlePlayWorkerUrl", description: "Crashes, ANR, reviews", appScoped: true, fieldType: "url" },
+  linear:       { id: "linear",     label: "Linear",        icon: "🎫", initial: "L", iconBg: "rgba(94,106,210,0.18)",  iconColor: "#8b96f0", mcpUrl: "https://mcp.linear.app/mcp",         requiredKey: "linearToken",        description: "Issues & stale tickets" },
+  sentry:       { id: "sentry",     label: "Sentry",        icon: "🔴", initial: "S", iconBg: "rgba(248,113,113,0.15)", iconColor: "#f87171", mcpUrl: "https://mcp.sentry.dev/mcp",          requiredKey: "sentryToken",         description: "Crash rates & ANR", comingSoon: true },
+  devtodev:     { id: "devtodev",   label: "DevToDev",      icon: "🎮", initial: "D", iconBg: "rgba(96,165,250,0.15)",  iconColor: "#60a5fa", mcpUrl: null,                                  requiredKey: "devtodevToken",       description: "DAU & session data", comingSoon: true },
+  appsflyer:    { id: "appsflyer",  label: "AppsFlyer",     icon: "📥", initial: "A", iconBg: "rgba(52,211,153,0.15)",  iconColor: "#34d399", mcpUrl: "https://mcp.appsflyer.com/auth/mcp",  requiredKey: "appsflyerToken",      description: "Installs & revenue" },
+  appstore:     { id: "appstore",   label: "App Store",     icon: "🍎", initial: "A", iconBg: "rgba(200,200,200,0.12)", iconColor: "#b0b8c8", mcpUrl: null,                                  requiredKey: "appstoreKey",         comingSoon: true },
+  googleplay:   { id: "googleplay", label: "Google Play",   icon: "🤖", initial: "G", iconBg: "rgba(52,211,153,0.15)",  iconColor: "#34d399", mcpUrl: null,                                  requiredKey: "googlePlayWorkerUrl", description: "Crashes, ANR, reviews", appScoped: true, fieldType: "url" },
 };
 
 export const DIGEST_SYSTEM_PROMPT = `You are an expert Product Manager analyst. Your job is to analyze data from PM tools and produce a concise, actionable daily digest.
