@@ -10,6 +10,7 @@ const DEFAULT_SETTINGS = {
   appsflyerToken: '',
   appstoreKey: '',
   googleplayKey: '',
+  googlePlayWorkerUrl: '',
   selectedApps: ['thrillz-android', 'thrillz-ios', 'play-smart'],
 };
 

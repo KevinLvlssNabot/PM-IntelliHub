@@ -6,7 +6,7 @@ import { SettingsPanel } from './components/SettingsPanel.jsx';
 import { DigestView } from './components/DigestView.jsx';
 import { ChatView } from './components/ChatView.jsx';
 import { SourceCards } from './components/SourceCards.jsx';
-import { TrendingView } from './components/TrendingView.jsx';
+import { TrendingGamesView } from './components/TrendingGamesView.jsx';
 
 export default function App() {
   const { settings, updateSettings, isFirstRun } = useSettings();
@@ -39,7 +39,6 @@ export default function App() {
         selectedApp={selectedApp}
         onSelectApp={(appId) => {
           setSelectedApp(appId);
-          // Reset to digest tab when switching apps
           setActiveTab('digest');
         }}
         activeTab={activeTab}
@@ -62,7 +61,10 @@ export default function App() {
         )}
 
         {activeTab === 'trending' && (
-          <TrendingView />
+          <TrendingGamesView
+            settings={settings}
+            onOpenSettings={handleOpenSettings}
+          />
         )}
 
         {activeTab === 'chat' && (

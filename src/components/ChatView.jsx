@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { SOURCES, CHAT_SYSTEM_PROMPT } from '../constants.js';
+import { APPS, SOURCES, CHAT_SYSTEM_PROMPT } from '../constants.js';
 import { useClaude } from '../hooks/useClaude.js';
 import { Button } from './ui/Button.jsx';
 
@@ -8,7 +8,6 @@ function renderMarkdown(text) {
   if (!text) return '';
 
   let html = text
-    // Escape HTML to avoid XSS
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
@@ -40,7 +39,7 @@ function renderMarkdown(text) {
   // Blockquote
   html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
 
-  // Unordered lists — group consecutive items
+  // Unordered lists
   html = html.replace(/((?:^[ \t]*[-*+] .+\n?)+)/gm, (block) => {
     const items = block.trim().split('\n').map(line =>
       `<li>${line.replace(/^[ \t]*[-*+] /, '')}</li>`
@@ -56,7 +55,7 @@ function renderMarkdown(text) {
     return `<ol>${items}</ol>`;
   });
 
-  // Paragraphs — wrap double-newline separated blocks not already in HTML tags
+  // Paragraphs
   html = html.replace(/\n\n+/g, '\n\n');
   const parts = html.split(/\n\n/);
   html = parts.map(part => {
@@ -74,7 +73,7 @@ function MessageBubble({ message }) {
 
   return (
     <div
-      className="animate-fade-in"
+      className="animate-slide-up"
       style={{
         display: 'flex',
         justifyContent: isUser ? 'flex-end' : 'flex-start',
@@ -86,14 +85,19 @@ function MessageBubble({ message }) {
       {!isUser && (
         <div
           style={{
-            width: 28,
-            height: 28,
-            borderRadius: '50%',
-            background: 'var(--color-accent)',
+            width: 24,
+            height: 24,
+            borderRadius: 'var(--r-sm)',
+            background: 'var(--accent-dim)',
+            border: '1px solid rgba(200,255,87,0.2)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 14,
+            fontFamily: 'var(--font-mono)',
+            fontSize: 8,
+            fontWeight: 600,
+            letterSpacing: '0.05em',
+            color: 'var(--accent)',
             flexShrink: 0,
             marginTop: 2,
           }}
@@ -103,14 +107,26 @@ function MessageBubble({ message }) {
       )}
       <div
         style={{
-          maxWidth: '80%',
-          padding: '10px 14px',
-          borderRadius: isUser ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
-          background: isUser ? 'var(--color-accent)' : 'var(--color-bg-tertiary)',
-          border: isUser ? 'none' : '1px solid var(--color-border)',
-          color: 'var(--color-text-primary)',
-          fontSize: 14,
-          lineHeight: 1.6,
+          maxWidth: '82%',
+          ...(isUser
+            ? {
+                padding: '10px 14px',
+                borderRadius: 'var(--r-lg)',
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-1)',
+                fontFamily: 'var(--font-ui)',
+                fontSize: 14,
+                lineHeight: 1.6,
+              }
+            : {
+                borderLeft: '3px solid var(--accent-dim)',
+                paddingLeft: 16,
+                color: 'var(--text-1)',
+                fontFamily: 'var(--font-ui)',
+                fontSize: 14,
+                lineHeight: 1.6,
+              }),
         }}
       >
         {isUser ? (
@@ -131,14 +147,19 @@ function TypingIndicator() {
     <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 16 }}>
       <div
         style={{
-          width: 28,
-          height: 28,
-          borderRadius: '50%',
-          background: 'var(--color-accent)',
+          width: 24,
+          height: 24,
+          borderRadius: 'var(--r-sm)',
+          background: 'var(--accent-dim)',
+          border: '1px solid rgba(200,255,87,0.2)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: 14,
+          fontFamily: 'var(--font-mono)',
+          fontSize: 8,
+          fontWeight: 600,
+          letterSpacing: '0.05em',
+          color: 'var(--accent)',
           flexShrink: 0,
         }}
       >
@@ -147,11 +168,10 @@ function TypingIndicator() {
       <div
         style={{
           padding: '10px 16px',
-          borderRadius: '12px 12px 12px 4px',
-          background: 'var(--color-bg-tertiary)',
-          border: '1px solid var(--color-border)',
+          borderLeft: '3px solid var(--accent-dim)',
+          paddingLeft: 16,
           display: 'flex',
-          gap: 6,
+          gap: 5,
           alignItems: 'center',
         }}
       >
@@ -159,11 +179,11 @@ function TypingIndicator() {
           <div
             key={i}
             style={{
-              width: 7,
-              height: 7,
+              width: 6,
+              height: 6,
               borderRadius: '50%',
-              background: 'var(--color-text-tertiary)',
-              animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+              background: 'var(--text-3)',
+              animation: `pulse 1.2s ease-in-out ${i * 0.22}s infinite`,
             }}
           />
         ))}
@@ -172,18 +192,26 @@ function TypingIndicator() {
   );
 }
 
-function buildSystemContext(settings) {
+function buildSystemContext(settings, appLabel) {
   const connected = Object.values(SOURCES)
-    .filter(s => settings[s.requiredKey] && s.mcpUrl)
+    .filter(s => settings[s.requiredKey] && s.mcpUrl && !s.comingSoon)
     .map(s => s.label);
   const notConnected = Object.values(SOURCES)
-    .filter(s => !settings[s.requiredKey])
+    .filter(s => !settings[s.requiredKey] && !s.comingSoon)
     .map(s => s.label);
+
+  const hasLinear = connected.includes('Linear');
+  const hasAppsflyer = connected.includes('AppsFlyer');
+
+  const hints = [];
+  if (hasLinear) hints.push(`Linear: the team for this app is named "${appLabel}"`);
+  if (hasAppsflyer) hints.push(`AppsFlyer: search for the app whose ID contains "${appLabel.toLowerCase().replace(/\s+/g, '')}"`);
 
   return `${CHAT_SYSTEM_PROMPT}
 
+Current app: ${appLabel}.
 Connected sources: ${connected.length ? connected.join(', ') : 'none'}.
-Not connected: ${notConnected.length ? notConnected.join(', ') : 'none'}.`;
+Not connected: ${notConnected.length ? notConnected.join(', ') : 'none'}.${hints.length ? `\n\nSource hints:\n${hints.map(h => `- ${h}`).join('\n')}` : ''}`;
 }
 
 function buildMcpList(settings) {
@@ -222,9 +250,9 @@ export function ChatView({ settings, selectedApp, onOpenSettings }) {
 
     try {
       const mcpList = buildMcpList(settings);
-      const systemCtx = buildSystemContext(settings);
+      const appLabel = APPS.find(a => a.id === selectedApp)?.label ?? selectedApp;
+      const systemCtx = buildSystemContext(settings, appLabel);
 
-      // Build API messages: convert our messages to Anthropic format
       const apiMessages = newMessages.map(m => ({
         role: m.role,
         content: m.content,
@@ -258,9 +286,20 @@ export function ChatView({ settings, selectedApp, onOpenSettings }) {
   if (!settings?.anthropicKey) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300, gap: 16 }}>
-        <div style={{ fontSize: 40 }}>🔑</div>
-        <h3 style={{ fontSize: 16, fontWeight: 600 }}>API key required</h3>
-        <p style={{ color: 'var(--color-text-secondary)', fontSize: 14, textAlign: 'center', maxWidth: 340 }}>
+        <div style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 11,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: 'var(--text-3)',
+          marginBottom: 4,
+        }}>
+          — API key required —
+        </div>
+        <h3 style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 24, fontWeight: 300, color: 'var(--text-1)' }}>
+          Connect to start chatting
+        </h3>
+        <p style={{ color: 'var(--text-2)', fontSize: 14, textAlign: 'center', maxWidth: 340 }}>
           Add your Anthropic API key to start chatting.
         </p>
         <Button onClick={onOpenSettings}>Open Settings</Button>
@@ -280,15 +319,24 @@ export function ChatView({ settings, selectedApp, onOpenSettings }) {
         }}
       >
         {messages.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--color-text-tertiary)' }}>
-            <div style={{ fontSize: 36, marginBottom: 16 }}>💬</div>
-            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8, color: 'var(--color-text-secondary)' }}>
+          <div style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-3)' }}>
+            <div style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 9,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: 'var(--text-3)',
+              marginBottom: 14,
+            }}>
+              Ask AI
+            </div>
+            <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 24, fontWeight: 300, color: 'var(--text-1)', marginBottom: 10 }}>
               Ask anything about {selectedApp}
             </div>
-            <div style={{ fontSize: 13, maxWidth: 380, margin: '0 auto', lineHeight: 1.6 }}>
+            <div style={{ fontSize: 13, color: 'var(--text-2)', maxWidth: 380, margin: '0 auto', lineHeight: 1.6, marginBottom: 24 }}>
               Ask about open tickets, user metrics, acquisition trends, crashes, or anything else about your product.
             </div>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginTop: 24 }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
               {[
                 'What are the most urgent open tickets?',
                 'Show me user retention trends',
@@ -301,14 +349,18 @@ export function ChatView({ settings, selectedApp, onOpenSettings }) {
                     textareaRef.current?.focus();
                   }}
                   style={{
-                    background: 'var(--color-bg-tertiary)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: 'var(--radius-card)',
-                    color: 'var(--color-text-secondary)',
+                    background: 'var(--bg-elevated)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--r-lg)',
+                    color: 'var(--text-2)',
                     padding: '8px 14px',
-                    fontSize: 13,
+                    fontFamily: 'var(--font-ui)',
+                    fontSize: 12,
                     cursor: 'pointer',
+                    transition: 'background 0.15s, border-color 0.15s',
                   }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.borderColor = 'rgba(200,255,87,0.2)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-elevated)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
                 >
                   {suggestion}
                 </button>
@@ -328,7 +380,7 @@ export function ChatView({ settings, selectedApp, onOpenSettings }) {
       {/* Input area */}
       <div
         style={{
-          borderTop: '1px solid var(--color-border)',
+          borderTop: '1px solid var(--border)',
           paddingTop: 16,
           display: 'flex',
           gap: 10,
@@ -350,7 +402,9 @@ export function ChatView({ settings, selectedApp, onOpenSettings }) {
             overflowY: 'auto',
             padding: '10px 12px',
             lineHeight: 1.5,
-            borderRadius: 'var(--radius-card)',
+            borderRadius: 'var(--r-md)',
+            fontFamily: 'var(--font-ui)',
+            fontSize: 13,
           }}
           onInput={e => {
             e.target.style.height = 'auto';
@@ -358,14 +412,27 @@ export function ChatView({ settings, selectedApp, onOpenSettings }) {
           }}
           disabled={isTyping}
         />
-        <Button
+        <button
           onClick={handleSend}
           disabled={!input.trim() || isTyping}
-          loading={isTyping}
-          style={{ flexShrink: 0, height: 40 }}
+          style={{
+            flexShrink: 0,
+            height: 40,
+            padding: '0 18px',
+            background: 'var(--accent)',
+            border: 'none',
+            borderRadius: 'var(--r-md)',
+            color: '#080a0e',
+            fontFamily: 'var(--font-ui)',
+            fontWeight: 600,
+            fontSize: 13,
+            cursor: !input.trim() || isTyping ? 'not-allowed' : 'pointer',
+            opacity: !input.trim() || isTyping ? 0.5 : 1,
+            transition: 'opacity 0.15s',
+          }}
         >
           Send
-        </Button>
+        </button>
       </div>
     </div>
   );
