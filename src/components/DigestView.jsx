@@ -233,6 +233,7 @@ export function DigestView({ settings, selectedApp, onOpenSettings }) {
         mcpList,
         systemPrompt: DIGEST_SYSTEM_PROMPT,
       });
+      if (!text) throw new Error('No response from Claude — the request may have been cut off. Try again.');
       const parsed = parseJSON(text);
       setDigest(parsed);
       setRefreshedAt(new Date());

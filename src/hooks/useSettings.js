@@ -6,10 +6,9 @@ const DEFAULT_SETTINGS = {
   anthropicKey: '',
   linearToken: '',
   sentryToken: '',
-  amplitudeToken: '',
+  devtodevToken: '',
   appsflyerToken: '',
   appstoreKey: '',
-  googleplayKey: '',
   googlePlayWorkerUrl: '',
   selectedApps: ['thrillz-android', 'thrillz-ios', 'play-smart'],
 };
