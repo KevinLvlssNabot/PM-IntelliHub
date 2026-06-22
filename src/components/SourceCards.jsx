@@ -19,7 +19,7 @@ function LinearCardContent({ settings }) {
 
 function SourceCard({ source, settings, appLabel, onOpenSettings }) {
   const hasToken = Boolean(settings[source.requiredKey]);
-  const showComingSoon = Boolean(source.comingSoon) && !hasToken;
+  const showComingSoon = Boolean(source.comingSoon) && (!hasToken || !source.mcpUrl);
   const isAppScoped = APP_SCOPED_SOURCES.has(source.id);
 
   return (

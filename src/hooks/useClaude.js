@@ -20,7 +20,7 @@ export function useClaude(settings) {
 
       const body = {
         model: CLAUDE_MODEL,
-        max_tokens: 4096,
+        max_tokens: 16384,
         system: systemPrompt || undefined,
         messages: msgArray,
       };
