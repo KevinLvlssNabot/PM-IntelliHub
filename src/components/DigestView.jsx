@@ -205,6 +205,7 @@ export function DigestView({ settings, selectedApp, onOpenSettings }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [refreshedAt, setRefreshedAt] = useState(null);
+  const [sourceErrors, setSourceErrors] = useState({});
 
   const fetchDigest = useCallback(async () => {
     setLoading(true);
@@ -221,6 +222,11 @@ export function DigestView({ settings, selectedApp, onOpenSettings }) {
           ? fetchGooglePlayMetrics(settings.googlePlayWorkerUrl, app.packageName)
           : Promise.resolve(null),
       ]);
+
+      // Collect per-source errors for display
+      const errs = {};
+      if (googlePlayData?.error) errs.googlePlay = googlePlayData.error;
+      setSourceErrors(errs);
 
       const prompt = buildDigestPrompt(appLabel, linearData, googlePlayData);
       const { text } = await callClaude({
@@ -306,6 +312,25 @@ export function DigestView({ settings, selectedApp, onOpenSettings }) {
             Error fetching digest
           </div>
           <div style={{ fontSize: 13, color: 'var(--text-2)' }}>{error}</div>
+        </div>
+      )}
+
+      {/* Data source errors */}
+      {Object.keys(sourceErrors).length > 0 && (
+        <div style={{
+          background: 'rgba(251,191,36,0.06)',
+          border: '1px solid rgba(251,191,36,0.3)',
+          borderRadius: 'var(--r-lg)',
+          padding: '14px 18px',
+        }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--warn)', marginBottom: 8 }}>
+            Data source errors
+          </div>
+          {sourceErrors.googlePlay && (
+            <div style={{ fontSize: 12, color: 'var(--text-2)', fontFamily: 'var(--font-mono)', wordBreak: 'break-all', lineHeight: 1.6 }}>
+              <span style={{ color: 'var(--text-3)' }}>Google Play: </span>{sourceErrors.googlePlay}
+            </div>
+          )}
         </div>
       )}
 
