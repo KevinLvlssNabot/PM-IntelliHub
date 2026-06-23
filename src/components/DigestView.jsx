@@ -1,49 +1,43 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { APPS, SOURCES, DIGEST_SYSTEM_PROMPT } from '../constants.js';
+import { APPS, DIGEST_SYSTEM_PROMPT } from '../constants.js';
 import { useClaude } from '../hooks/useClaude.js';
 import { fetchGooglePlayMetrics } from '../utils/googleplay.js';
+import { fetchLinearStaleIssues } from '../utils/linear.js';
 import { Card } from './ui/Card.jsx';
 import { Badge } from './ui/Badge.jsx';
 import { Button } from './ui/Button.jsx';
 import { SkeletonCard, Skeleton } from './ui/Skeleton.jsx';
 
-function buildMcpList(settings) {
-  return Object.values(SOURCES)
-    .filter(s => s.mcpUrl && settings[s.requiredKey])
-    .map(s => ({
-      name: s.id,
-      mcpUrl: s.mcpUrl,
-      token: settings[s.requiredKey],
-    }));
-}
+function buildDigestPrompt(appLabel, linearData, googlePlayData) {
+  const sections = [];
 
-function buildDigestPrompt(appLabel, mcpList, googlePlayData) {
-  const hasLinear = mcpList.some(m => m.name === 'linear');
-  const hasAppsflyer = mcpList.some(m => m.name === 'appsflyer');
-
-  const sourceInstructions = [];
-  if (hasLinear) {
-    sourceInstructions.push(
-      `- Linear: filter by the team named exactly "${appLabel}". Fetch issues with status "In Progress" or "In Review" that have not been updated in 3+ days.`
+  if (linearData && linearData.length > 0) {
+    const appIssues = linearData.filter(i =>
+      !i.team || i.team.toLowerCase().includes(appLabel.toLowerCase().split(' ')[0])
     );
-  }
-  if (hasAppsflyer) {
-    sourceInstructions.push(
-      `- AppsFlyer: find the app whose App ID contains "${appLabel.toLowerCase().replace(/\s+/g, '')}" or a close variant of it (e.g. "thrillzandroid", "playsmart"). Fetch installs and revenue for the last 24h vs 7-day average.`
+    sections.push(
+      `Pre-fetched Linear stale issues for "${appLabel}" (In Progress / In Review, 3+ days idle):\n` +
+      JSON.stringify(appIssues.length > 0 ? appIssues : linearData, null, 2)
     );
+  } else if (linearData !== null && linearData !== undefined) {
+    sections.push('Linear: no stale issues found.');
   }
 
-  const gpSection = googlePlayData && !googlePlayData.error
-    ? `\nPre-fetched Google Play data (use this directly, do not re-fetch):\n${JSON.stringify(googlePlayData, null, 2)}`
-    : googlePlayData?.error
-    ? `\nGoogle Play data fetch failed: ${googlePlayData.error}`
-    : '';
+  if (googlePlayData && !googlePlayData.error) {
+    sections.push(
+      `Pre-fetched Google Play data (use directly, do not re-fetch):\n${JSON.stringify(googlePlayData, null, 2)}`
+    );
+  } else if (googlePlayData?.error) {
+    sections.push(`Google Play data fetch failed: ${googlePlayData.error}`);
+  }
+
+  const dataBlock = sections.length > 0
+    ? sections.join('\n\n')
+    : 'No live data sources are connected. Produce a placeholder digest that clearly notes data is unavailable and suggests connecting sources in Settings.';
 
   return `You are producing a daily PM digest for the "${appLabel}" product.
 
-${sourceInstructions.length > 0
-    ? `Source-specific instructions:\n${sourceInstructions.join('\n')}\n\nUse the MCP tools above to gather real data.`
-    : 'No live data sources are connected. Produce a placeholder digest that clearly notes data is unavailable and suggests connecting sources in Settings.'}${gpSection}
+${dataBlock}
 
 Respond ONLY with raw JSON (no markdown fences) matching this exact schema:
 {
@@ -216,21 +210,21 @@ export function DigestView({ settings, selectedApp, onOpenSettings }) {
     setLoading(true);
     setError(null);
     try {
-      const mcpList = buildMcpList(settings);
       const app = APPS.find(a => a.id === selectedApp);
       const appLabel = app?.label ?? selectedApp;
 
-      // Pre-fetch Google Play data if worker URL and package name are available
-      let googlePlayData = null;
+      // Pre-fetch all data sources in parallel
       const hasAndroid = app?.platform === 'android' || app?.platform === 'both';
-      if (settings.googlePlayWorkerUrl && app?.packageName && hasAndroid) {
-        googlePlayData = await fetchGooglePlayMetrics(settings.googlePlayWorkerUrl, app.packageName);
-      }
+      const [linearData, googlePlayData] = await Promise.all([
+        settings.linearToken ? fetchLinearStaleIssues(settings.linearToken) : Promise.resolve(null),
+        (settings.googlePlayWorkerUrl && app?.packageName && hasAndroid)
+          ? fetchGooglePlayMetrics(settings.googlePlayWorkerUrl, app.packageName)
+          : Promise.resolve(null),
+      ]);
 
-      const prompt = buildDigestPrompt(appLabel, mcpList, googlePlayData);
+      const prompt = buildDigestPrompt(appLabel, linearData, googlePlayData);
       const { text } = await callClaude({
         prompt,
-        mcpList,
         systemPrompt: DIGEST_SYSTEM_PROMPT,
       });
       if (!text) throw new Error('No response from Claude — the request may have been cut off. Try again.');
