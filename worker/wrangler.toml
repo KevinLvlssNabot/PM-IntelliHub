@@ -1,4 +1,4 @@
-name = "pm-intellihub-gplay"
+name = "pm-intellihub"
 main = "index.js"
 compatibility_date = "2024-01-01"
 
