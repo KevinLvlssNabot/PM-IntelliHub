@@ -216,7 +216,7 @@ export function DigestView({ settings, selectedApp, onOpenSettings }) {
       // Pre-fetch all data sources in parallel
       const hasAndroid = app?.platform === 'android' || app?.platform === 'both';
       const [linearData, googlePlayData] = await Promise.all([
-        settings.linearToken ? fetchLinearStaleIssues(settings.linearToken) : Promise.resolve(null),
+        settings.linearToken ? fetchLinearStaleIssues(settings.linearToken, settings.googlePlayWorkerUrl) : Promise.resolve(null),
         (settings.googlePlayWorkerUrl && app?.packageName && hasAndroid)
           ? fetchGooglePlayMetrics(settings.googlePlayWorkerUrl, app.packageName)
           : Promise.resolve(null),

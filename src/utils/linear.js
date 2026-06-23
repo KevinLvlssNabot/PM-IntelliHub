@@ -1,6 +1,6 @@
 const PRIORITY_LABEL = ['no priority', 'urgent', 'high', 'medium', 'low'];
 
-export async function fetchLinearStaleIssues(linearToken) {
+export async function fetchLinearStaleIssues(linearToken, workerUrl) {
   if (!linearToken) return null;
 
   const cutoff = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
@@ -27,8 +27,12 @@ export async function fetchLinearStaleIssues(linearToken) {
     }
   }`;
 
+  const endpoint = workerUrl
+    ? `${workerUrl.replace(/\/$/, '')}/linear`
+    : 'https://api.linear.app/graphql';
+
   try {
-    const res = await fetch('https://api.linear.app/graphql', {
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
