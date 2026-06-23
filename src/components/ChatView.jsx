@@ -230,7 +230,7 @@ export function ChatView({ settings, selectedApp, onOpenSettings }) {
 
   useEffect(() => {
     if (!settings?.linearToken) { setLinearData(null); return; }
-    fetchLinearStaleIssues(settings.linearToken).then(setLinearData).catch(() => {});
+    fetchLinearStaleIssues(settings.linearToken, settings.googlePlayWorkerUrl).then(setLinearData).catch(() => {});
   }, [settings?.linearToken]);
 
   useEffect(() => {

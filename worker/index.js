@@ -77,16 +77,38 @@ function dateRange(days) {
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Content-Type': 'application/json',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: CORS_HEADERS,
+    headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
   });
+}
+
+async function handleLinear(request) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+
+  const { query, variables } = body;
+  if (!query) return jsonResponse({ error: 'Missing query' }, 400);
+
+  const auth = request.headers.get('Authorization');
+  if (!auth) return jsonResponse({ error: 'Missing Authorization header' }, 401);
+
+  const res = await fetch('https://api.linear.app/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: auth },
+    body: JSON.stringify({ query, variables }),
+  });
+  const data = await res.json();
+  return jsonResponse(data, res.status);
 }
 
 async function handleMetrics(request, env) {
@@ -228,6 +250,10 @@ export default {
 
     if (request.method === 'GET' && url.pathname === '/metrics') {
       return handleMetrics(request, env);
+    }
+
+    if (request.method === 'POST' && url.pathname === '/linear') {
+      return handleLinear(request);
     }
 
     return jsonResponse({ error: 'Not found' }, 404);
