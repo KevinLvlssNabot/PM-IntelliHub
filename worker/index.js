@@ -167,6 +167,18 @@ async function handleMetrics(request, env) {
   let reviews = [];
   const errors = [];
 
+  async function apiErrMsg(settled) {
+    if (settled.status === 'rejected') return settled.reason?.message ?? 'network error';
+    const res = settled.value;
+    try {
+      const body = await res.clone().json();
+      const detail = body?.error?.message || body?.error?.status || JSON.stringify(body?.error ?? body);
+      return `HTTP ${res.status}: ${detail}`;
+    } catch {
+      return `HTTP ${res.status}`;
+    }
+  }
+
   // Parse crash rate
   if (crashRes.status === 'fulfilled' && crashRes.value.ok) {
     try {
@@ -180,10 +192,7 @@ async function handleMetrics(request, env) {
       errors.push(`Crash rate parse error: ${e.message}`);
     }
   } else {
-    const errMsg = crashRes.status === 'rejected'
-      ? crashRes.reason?.message
-      : `HTTP ${crashRes.value?.status}`;
-    errors.push(`Crash rate fetch failed: ${errMsg}`);
+    errors.push(`Crash rate fetch failed: ${await apiErrMsg(crashRes)}`);
   }
 
   // Parse ANR rate
@@ -199,10 +208,7 @@ async function handleMetrics(request, env) {
       errors.push(`ANR rate parse error: ${e.message}`);
     }
   } else {
-    const errMsg = anrRes.status === 'rejected'
-      ? anrRes.reason?.message
-      : `HTTP ${anrRes.value?.status}`;
-    errors.push(`ANR rate fetch failed: ${errMsg}`);
+    errors.push(`ANR rate fetch failed: ${await apiErrMsg(anrRes)}`);
   }
 
   // Parse reviews
@@ -224,10 +230,7 @@ async function handleMetrics(request, env) {
       errors.push(`Reviews parse error: ${e.message}`);
     }
   } else {
-    const errMsg = reviewsRes.status === 'rejected'
-      ? reviewsRes.reason?.message
-      : `HTTP ${reviewsRes.value?.status}`;
-    errors.push(`Reviews fetch failed: ${errMsg}`);
+    errors.push(`Reviews fetch failed: ${await apiErrMsg(reviewsRes)}`);
   }
 
   return jsonResponse({
