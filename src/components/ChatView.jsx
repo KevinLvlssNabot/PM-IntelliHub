@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { APPS, SOURCES, CHAT_SYSTEM_PROMPT } from '../constants.js';
 import { useClaude } from '../hooks/useClaude.js';
+import { fetchLinearStaleIssues } from '../utils/linear.js';
 import { Button } from './ui/Button.jsx';
 
 // Simple markdown renderer — handles the most common patterns without a library
@@ -192,7 +193,7 @@ function TypingIndicator() {
   );
 }
 
-function buildSystemContext(settings, appLabel) {
+function buildSystemContext(settings, appLabel, linearData) {
   const connected = Object.values(SOURCES)
     .filter(s => settings[s.requiredKey] && s.mcpUrl && !s.comingSoon)
     .map(s => s.label);
@@ -200,28 +201,21 @@ function buildSystemContext(settings, appLabel) {
     .filter(s => !settings[s.requiredKey] && !s.comingSoon)
     .map(s => s.label);
 
-  const hasLinear = connected.includes('Linear');
-  const hasAppsflyer = connected.includes('AppsFlyer');
-
-  const hints = [];
-  if (hasLinear) hints.push(`Linear: the team for this app is named "${appLabel}"`);
-  if (hasAppsflyer) hints.push(`AppsFlyer: search for the app whose ID contains "${appLabel.toLowerCase().replace(/\s+/g, '')}"`);
-
-  return `${CHAT_SYSTEM_PROMPT}
+  let ctx = `${CHAT_SYSTEM_PROMPT}
 
 Current app: ${appLabel}.
 Connected sources: ${connected.length ? connected.join(', ') : 'none'}.
-Not connected: ${notConnected.length ? notConnected.join(', ') : 'none'}.${hints.length ? `\n\nSource hints:\n${hints.map(h => `- ${h}`).join('\n')}` : ''}`;
-}
+Not connected: ${notConnected.length ? notConnected.join(', ') : 'none'}.`;
 
-function buildMcpList(settings) {
-  return Object.values(SOURCES)
-    .filter(s => s.mcpUrl && settings[s.requiredKey])
-    .map(s => ({
-      name: s.id,
-      mcpUrl: s.mcpUrl,
-      token: settings[s.requiredKey],
-    }));
+  if (linearData && linearData.length > 0) {
+    const appIssues = linearData.filter(i =>
+      !i.team || i.team.toLowerCase().includes(appLabel.toLowerCase().split(' ')[0])
+    );
+    ctx += `\n\nPre-fetched Linear stale issues for "${appLabel}" (In Progress / In Review, 3+ days idle):\n` +
+      JSON.stringify(appIssues.length > 0 ? appIssues : linearData, null, 2);
+  }
+
+  return ctx;
 }
 
 export function ChatView({ settings, selectedApp, onOpenSettings }) {
@@ -230,8 +224,14 @@ export function ChatView({ settings, selectedApp, onOpenSettings }) {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState(null);
+  const [linearData, setLinearData] = useState(null);
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
+
+  useEffect(() => {
+    if (!settings?.linearToken) { setLinearData(null); return; }
+    fetchLinearStaleIssues(settings.linearToken).then(setLinearData).catch(() => {});
+  }, [settings?.linearToken]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -249,9 +249,8 @@ export function ChatView({ settings, selectedApp, onOpenSettings }) {
     setIsTyping(true);
 
     try {
-      const mcpList = buildMcpList(settings);
       const appLabel = APPS.find(a => a.id === selectedApp)?.label ?? selectedApp;
-      const systemCtx = buildSystemContext(settings, appLabel);
+      const systemCtx = buildSystemContext(settings, appLabel, linearData);
 
       const apiMessages = newMessages.map(m => ({
         role: m.role,
@@ -260,7 +259,6 @@ export function ChatView({ settings, selectedApp, onOpenSettings }) {
 
       const { text: responseText } = await callClaude({
         messages: apiMessages,
-        mcpList,
         systemPrompt: systemCtx,
       });
 

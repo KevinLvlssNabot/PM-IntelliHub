@@ -12,7 +12,12 @@ const ITUNES_LOOKUP = 'https://itunes.apple.com/lookup';
  * and filters them down to casual/puzzle genres that fit Play Smart.
  */
 export async function fetchAppStoreTrending(limit = 10) {
-  const rssRes = await fetch(APPSTORE_GAMES_RSS);
+  let rssRes;
+  try {
+    rssRes = await fetch(APPSTORE_GAMES_RSS);
+  } catch {
+    throw new Error('App Store chart data is unavailable — Apple\'s RSS feed blocks browser requests. Try the Google Play tab instead.');
+  }
   if (!rssRes.ok) throw new Error(`App Store RSS returned ${rssRes.status}`);
   const rssData = await rssRes.json();
 
